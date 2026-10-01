@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>확인요청 회신</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#ffffff; --ink:#1f2933; --muted:#616e7c; --line:#d9dee5; --accent:#1f4e79; --ok:#2e7d32; --err:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; font-size:16px; line-height:1.55; }
+  main { max-width:640px; margin:0 auto; padding:20px 16px 48px; }
+  h1 { font-size:20px; margin:4px 0 2px; }
+  .sub { color:var(--muted); font-size:14px; margin-bottom:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:12px; }
+  .tag { display:inline-block; font-size:12px; color:var(--accent); background:#e8f0f8; border-radius:4px; padding:1px 6px; margin-bottom:6px; }
+  .q { font-weight:600; margin-bottom:8px; }
+  textarea { width:100%; min-height:84px; padding:10px; font:inherit; border:1px solid var(--line); border-radius:8px; resize:vertical; }
+  label.chk { display:flex; align-items:center; gap:6px; margin-top:8px; color:var(--muted); font-size:14px; }
+  button { width:100%; padding:14px; font-size:17px; font-weight:700; color:#fff; background:var(--accent); border:0; border-radius:10px; margin-top:8px; }
+  button:disabled { opacity:.6; }
+  .note { font-size:13px; color:var(--muted); }
+  .done { text-align:center; padding:32px 16px; }
+  .done h2 { color:var(--ok); }
+  .err { color:var(--err); font-size:14px; margin-top:8px; }
+  a { color:var(--accent); }
+</style>
+</head>
+<body>
+<main id="app"><div class="card done"><p>불러오는 중…</p></div></main>
+<script>
+/* ▼ Apps Script [배포 > 배포 관리]의 웹 앱 URL(…/exec)로 바꿔 주세요 */
+const API = 'https://script.google.com/macros/s/AKfycbyeyZ8rxdkn5GieYQWDthbe58N-k-Wfj8dhXFQhW5-Hx4sMg54CfH6Z4vm3nRRVV910/exec';
+/* ▲ */
+
+const app = document.getElementById('app');
+const token = new URLSearchParams(location.search).get('t') || '';
+let DATA = null;
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function contactHtml(c) { if (!c) return ''; return ' 문의: ' + (/^https?:\/\//.test(c) ? '<a href="' + esc(c) + '" target="_blank" rel="noopener">카카오톡 오픈채팅</a>' : esc(c)); }
+function fail(msg) { app.innerHTML = '<div class="card done"><h2 style="color:var(--err)">' + esc(msg) + '</h2><p class="note">문자로 받은 링크를 그대로 눌러 주세요. 계속 열리지 않으면 문의처로 알려주세요.</p></div>'; }
+
+async function load() {
+  if (!/^[A-Za-z0-9]{8,16}$/.test(token)) { fail('링크를 확인할 수 없습니다'); return; }
+  try {
+    const res = await fetch(API + '?api=1&t=' + encodeURIComponent(token), { credentials: 'omit' });
+    DATA = await res.json();
+  } catch (e) { fail('잠시 후 다시 시도해 주세요'); return; }
+  if (!DATA || !DATA.ok) { fail('링크를 확인할 수 없습니다'); return; }
+  render();
+}
+
+function render() {
+  const prev = DATA.prev || {};
+  const prevNote = Object.keys(prev).length ? '<p class="note">이전에 보내주신 회신이 입력되어 있습니다. 고칠 부분만 수정해서 다시 제출하시면 됩니다.</p>' : '';
+  let h = '<h1>' + esc(DATA.name) + '님, 확인 부탁드립니다</h1>'
+        + '<div class="sub">' + esc(DATA.org) + ' · 형사고소 설문 확인요청 ' + DATA.items.length + '건'
+        + (DATA.deadline ? ' · 회신기한 ' + esc(DATA.deadline) : '') + '</div>' + prevNote;
+  DATA.items.forEach(it => {
+    const pv = prev[it.n] || '';
+    const unk = pv.indexOf('[기억나지 않음/모름]') >= 0;
+    h += '<div class="card"><div class="tag">' + it.n + '. ' + esc(it.item) + '</div>'
+       + '<div class="q">' + esc(it.q) + '</div>'
+       + '<textarea id="a' + it.n + '" placeholder="답변을 입력해 주세요">' + esc(pv.replace(' [기억나지 않음/모름]', '').replace('[기억나지 않음/모름]', '')) + '</textarea>'
+       + '<label class="chk"><input type="checkbox" id="u' + it.n + '"' + (unk ? ' checked' : '') + '> 기억나지 않음 / 모름</label></div>';
+  });
+  h += '<div class="card"><div class="q">추가로 알려주실 내용(선택)</div><textarea id="memo" placeholder="정정할 내용이나 추가 사실이 있으면 적어 주세요">' + esc(DATA.memo || '') + '</textarea></div>'
+     + '<button id="send">회신 제출</button><div id="err" class="err"></div>'
+     + '<p class="note">입력하신 내용은 형사고소 진술서·사실확인서 정리에만 사용됩니다.' + contactHtml(DATA.contact) + '</p>';
+  app.innerHTML = h;
+  document.getElementById('send').addEventListener('click', send);
+}
+
+async function send() {
+  const answers = DATA.items.map(it => ({ n: it.n, text: document.getElementById('a' + it.n).value, unknown: document.getElementById('u' + it.n).checked }));
+  const empty = answers.filter(a => !a.text.trim() && !a.unknown).length;
+  if (empty && !confirm('답변하지 않은 항목이 ' + empty + '건 있습니다. 그대로 제출할까요?')) return;
+  const btn = document.getElementById('send'); btn.disabled = true; btn.textContent = '제출 중…';
+  try {
+    const res = await fetch(API, { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ token: token, answers: answers, memo: document.getElementById('memo').value }) });
+    const r = await res.json();
+    if (!r.ok) throw new Error(r.error || '제출 실패');
+    app.innerHTML = '<div class="card done"><h2>회신이 접수되었습니다</h2><p>협조해 주셔서 감사합니다.</p><p class="note">내용을 고치려면 같은 링크로 다시 들어와 제출하시면 됩니다.' + contactHtml(DATA.contact) + '</p></div>';
+  } catch (e) {
+    btn.disabled = false; btn.textContent = '회신 제출';
+    document.getElementById('err').textContent = '제출하지 못했습니다: ' + (e && e.message ? e.message : e) + ' 잠시 후 다시 눌러 주세요.';
+  }
+}
+load();
+</script>
+</body>
+</html>
