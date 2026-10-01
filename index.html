@@ -34,14 +34,37 @@ const API = 'https://script.google.com/macros/s/AKfycbyeyZ8rxdkn5GieYQWDthbe58N-
 /* ▲ */
 
 const app = document.getElementById('app');
-const token = new URLSearchParams(location.search).get('t') || '';
+let token = new URLSearchParams(location.search).get('t') || '';
 let DATA = null;
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function contactHtml(c) { if (!c) return ''; return ' 문의: ' + (/^https?:\/\//.test(c) ? '<a href="' + esc(c) + '" target="_blank" rel="noopener">카카오톡 오픈채팅</a>' : esc(c)); }
 function fail(msg) { app.innerHTML = '<div class="card done"><h2 style="color:var(--err)">' + esc(msg) + '</h2><p class="note">문자로 받은 링크를 그대로 눌러 주세요. 계속 열리지 않으면 문의처로 알려주세요.</p></div>'; }
 
+/* 공통 링크로 들어온 경우: 성명 + 휴대폰번호로 본인 확인 후 질문을 불러온다 */
+function showLookup(msg) {
+  app.innerHTML = '<h1>형사고소 설문 확인요청 회신</h1>'
+    + '<div class="sub">본인 확인을 위해 설문에 적으신 성명과 휴대폰번호를 입력해 주세요.</div>'
+    + '<div class="card"><div class="q">성명</div><input id="lkName" autocomplete="name" style="width:100%;padding:10px;font:inherit;border:1px solid var(--line);border-radius:8px">'
+    + '<div class="q" style="margin-top:12px">휴대폰번호</div><input id="lkPhone" inputmode="numeric" autocomplete="tel" placeholder="010-0000-0000" style="width:100%;padding:10px;font:inherit;border:1px solid var(--line);border-radius:8px"></div>'
+    + '<button id="lkBtn">내 확인요청 보기</button><div id="lkErr" class="err">' + esc(msg || '') + '</div>'
+    + '<p class="note">설문에 적으신 번호와 다른 번호를 쓰시거나, 확인요청 대상이 아니면 조회되지 않습니다. 문의: 카카오톡 오픈채팅 <a href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">바로가기</a></p>';
+  document.getElementById('lkBtn').addEventListener('click', lookup);
+}
+async function lookup() {
+  const name = document.getElementById('lkName').value.trim(), phone = document.getElementById('lkPhone').value.replace(/\D/g, '');
+  if (!name || phone.length < 10) { document.getElementById('lkErr').textContent = '성명과 휴대폰번호를 정확히 입력해 주세요.'; return; }
+  const btn = document.getElementById('lkBtn'); btn.disabled = true; btn.textContent = '확인 중…';
+  try {
+    const res = await fetch(API, { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'lookup', name: name, phone: phone }) });
+    DATA = await res.json();
+  } catch (e) { btn.disabled = false; btn.textContent = '내 확인요청 보기'; document.getElementById('lkErr').textContent = '잠시 후 다시 시도해 주세요.'; return; }
+  if (!DATA || !DATA.ok) { showLookup(DATA && DATA.error ? DATA.error : '일치하는 확인요청이 없습니다. 성명과 번호를 다시 확인해 주세요.'); return; }
+  token = DATA.token;
+  render();
+}
+
 async function load() {
-  if (!/^[A-Za-z0-9]{8,16}$/.test(token)) { fail('링크를 확인할 수 없습니다'); return; }
+  if (!/^[A-Za-z0-9]{8,16}$/.test(token)) { showLookup(''); return; }
   try {
     const res = await fetch(API + '?api=1&t=' + encodeURIComponent(token), { credentials: 'omit' });
     DATA = await res.json();
