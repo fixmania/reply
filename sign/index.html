@@ -1,1 +1,454 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>고소 서류 서명</title>
+<style>
+  :root {
+    --bg: #f4f6f9; --card: #ffffff; --ink: #1b2430; --sub: #5a6675; --line: #d7dde5;
+    --brand: #1f4e79; --brand-ink: #ffffff; --ok: #1e7a46; --ok-bg: #e3f3e9; --warn: #a15c00; --warn-bg: #fff3dc;
+    --bad: #b3261e; --bad-bg: #fde7e5; --kv: #eef3f8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.65 "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+  header { background: var(--brand); color: var(--brand-ink); padding: 14px 16px; }
+  header h1 { margin: 0; font-size: 18px; font-weight: 700; }
+  header p { margin: 2px 0 0; font-size: 13px; opacity: .85; }
+  main { max-width: 760px; margin: 0 auto; padding: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 16px; margin-bottom: 14px; }
+  h2 { font-size: 20px; margin: 0 0 8px; }
+  label { display: block; font-weight: 700; margin: 10px 0 6px; }
+  input[type=tel], textarea { width: 100%; font-size: 22px; padding: 12px; border: 2px solid var(--line); border-radius: 10px; }
+  input[type=tel] { letter-spacing: .4em; text-align: center; }
+  textarea { font-size: 16px; min-height: 120px; }
+  button { font: inherit; cursor: pointer; border-radius: 10px; border: 0; padding: 14px 16px; }
+  .btn { width: 100%; background: var(--brand); color: var(--brand-ink); font-weight: 700; font-size: 18px; }
+  .btn:disabled { background: #9aa8b8; cursor: not-allowed; }
+  .btn-sub { background: #e9eef4; color: var(--ink); }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  .msg { padding: 12px 14px; border-radius: 10px; margin: 10px 0; font-size: 15px; }
+  .msg.bad { background: var(--bad-bg); color: var(--bad); }
+  .msg.ok { background: var(--ok-bg); color: var(--ok); }
+  .msg.warn { background: var(--warn-bg); color: var(--warn); }
+  .list button.item { width: 100%; text-align: left; background: var(--card); border: 1px solid var(--line); margin-bottom: 10px; display: flex; align-items: center; gap: 12px; padding: 16px; }
+  .item .t { flex: 1; font-weight: 700; }
+  .item .s { font-size: 13px; color: var(--sub); font-weight: 400; display: block; }
+  .badge { font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .b-ok { background: var(--ok-bg); color: var(--ok); }
+  .b-warn { background: var(--warn-bg); color: var(--warn); }
+  .b-bad { background: var(--bad-bg); color: var(--bad); }
+  .progress { height: 10px; background: #e3e8ee; border-radius: 99px; overflow: hidden; margin: 8px 0 2px; }
+  .progress i { display: block; height: 100%; background: var(--ok); }
+  .doc { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px 16px; }
+  .doc .dt { text-align: center; font-size: 22px; letter-spacing: .15em; margin: 4px 0 16px; }
+  .doc h3 { font-size: 17px; margin: 18px 0 6px; color: var(--brand); }
+  .doc p { margin: 6px 0; word-break: keep-all; overflow-wrap: anywhere; }
+  .doc p.note { font-size: 14px; color: var(--sub); }
+  .doc p.r { text-align: right; } .doc p.c { text-align: center; }
+  .tw { overflow-x: auto; margin: 8px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { border: 1px solid var(--line); padding: 7px 8px; vertical-align: top; text-align: left; word-break: keep-all; overflow-wrap: anywhere; }
+  table.kv th { background: var(--kv); width: 32%; }
+  table.grid tr:first-child td { background: var(--kv); font-weight: 700; }
+  table.small { font-size: 13px; }
+  .pad-wrap { border: 2px dashed #8aa0b8; border-radius: 12px; background: #fff; position: relative; touch-action: none; }
+  canvas { display: block; width: 100%; height: 190px; border-radius: 12px; }
+  .pad-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #9aa8b8; pointer-events: none; font-size: 18px; }
+  .check { display: flex; gap: 10px; align-items: flex-start; font-weight: 700; margin: 14px 0; }
+  .check input { width: 26px; height: 26px; flex: none; margin-top: 2px; }
+  .back { background: none; color: var(--brand); padding: 6px 0; font-weight: 700; }
+  footer { text-align: center; font-size: 13px; color: var(--sub); padding: 18px 16px 30px; }
+  footer a { color: var(--brand); }
+  .hide { display: none !important; }
+  .spinner { text-align: center; padding: 30px; color: var(--sub); }
+</style>
+</head>
+<body>
+<header><h1>달서 푸르지오 시그니처 형사고소 서류 서명</h1><p id="hdrSub">고소인 본인 전용 화면</p></header>
+<main id="app"><div class="spinner">불러오는 중…</div></main>
+<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a></footer>
 
+<script>
+// ▼ Apps Script 웹 앱 주소(배포 후 받은 /exec 주소)로 바꾸세요.
+const API = 'https://script.google.com/macros/s/AKfycbwKwhJxIBALC93dVYLt6WOnRoLG3Xa7tMSLxqnRCrZmwjwiQKyB1lgLUuI2dY1l1iE/exec';
+
+const $ = (s, el = document) => el.querySelector(s);
+const app = $('#app');
+let token = new URLSearchParams(location.search).get('t') || '';   // 없으면 공통 링크 → 본인 확인 후 채워짐
+let sid = '', data = null;
+const store = { get(k) { try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } }, set(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }, del(k) { try { sessionStorage.removeItem(k); } catch (e) {} } };
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function br(s) { return esc(s).replace(/\n/g, '<br>'); }
+
+async function api(body) {
+  const res = await fetch(API, { method: 'POST', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+  if (!res.ok) throw new Error('서버 응답 오류(' + res.status + ')');
+  return res.json();
+}
+
+function badge(st) {
+  if (st === '완료' || st === '확인') return '<span class="badge b-ok">' + (st === '완료' ? '서명 완료' : '확인 완료') + '</span>';
+  if (st === '재서명 필요') return '<span class="badge b-bad">내용 변경 · 다시 서명</span>';
+  return '<span class="badge b-warn">' + (st === '열람' ? '확인 전' : '서명 전') + '</span>';
+}
+
+function renderBlocks(blocks) {
+  let h = '';
+  for (const b of blocks || []) {
+    if (b.t === 'title') h += '<h2 class="dt">' + esc(b.text) + '</h2>';
+    else if (b.t === 'h') h += '<h3>' + esc(b.text) + '</h3>';
+    else if (b.t === 'p') { const cls = [b.note ? 'note' : '', b.align === 'right' ? 'r' : '', b.align === 'center' ? 'c' : ''].join(' ').trim(); h += '<p' + (cls ? ' class="' + cls + '"' : '') + '>' + (b.bold ? '<b>' + br(b.text) + '</b>' : br(b.text)) + '</p>'; }
+    else if (b.t === 'blank') h += '<p>&nbsp;</p>';
+    else if (b.t === 'table' && b.rows) {
+      if (b.kv) h += '<div class="tw"><table class="kv' + (b.small ? ' small' : '') + '">' + b.rows.map(r => '<tr><th>' + br(r[0]) + '</th><td>' + br(r[1]) + '</td></tr>').join('') + '</table></div>';
+      else h += '<div class="tw"><table class="grid' + (b.small ? ' small' : '') + '">' + b.rows.map(r => '<tr>' + r.map(c => '<td>' + br(c) + '</td>').join('') + '</tr>').join('') + '</table></div>';
+    }
+  }
+  return h;
+}
+
+// ── 1) 본인 확인 ──
+// 공통 링크: 성명 + 휴대폰 번호 + 동·호수로 본인 확인 → 본인 전용 화면(개별 링크)으로 이동
+function showCommonLogin(msg, kind, keep) {
+  const k = keep || {};
+  app.innerHTML = `
+    <div class="card">
+      <h2>본인 확인</h2>
+      <p>고소인(참고인) 본인 확인 후 <b>본인의 서류만</b> 볼 수 있습니다. 가족이 같은 휴대폰 번호를 쓰시면 각자의 성명으로 한 번씩 접속해 주세요.</p>
+      <label for="nm">성명</label>
+      <input id="nm" type="text" autocomplete="name" value="${esc(k.name || '')}" style="width:100%;font-size:20px;padding:12px;border:2px solid var(--line);border-radius:10px">
+      <label for="ph">휴대폰 번호(설문에 적으신 번호)</label>
+      <input id="ph" type="tel" inputmode="numeric" autocomplete="tel" placeholder="010-0000-0000" value="${esc(k.phone || '')}" style="letter-spacing:normal;text-align:left">
+      <div class="row" style="margin-top:4px">
+        <div><label for="dg">동</label><input id="dg" type="tel" inputmode="numeric" maxlength="3" placeholder="101" value="${esc(k.dong || '')}" style="letter-spacing:normal"></div>
+        <div><label for="ho">호수</label><input id="ho" type="tel" inputmode="numeric" maxlength="4" placeholder="1501" value="${esc(k.ho || '')}" style="letter-spacing:normal"></div>
+      </div>
+      ${msg ? '<div class="msg ' + (kind || 'bad') + '">' + esc(msg) + '</div>' : ''}
+      <p style="margin-top:14px"><button class="btn" id="go">확인</button></p>
+    </div>`;
+  const go = async () => {
+    const v = { name: $('#nm').value.trim(), phone: $('#ph').value.replace(/\D/g, ''), dong: $('#dg').value.replace(/\D/g, ''), ho: $('#ho').value.replace(/\D/g, '') };
+    if (!v.name || v.phone.length < 10 || !v.dong || !v.ho) { showCommonLogin('성명, 휴대폰 번호, 동, 호수를 모두 입력해 주세요.', 'bad', v); return; }
+    $('#go').disabled = true; $('#go').textContent = '확인 중…';
+    try {
+      const r = await api({ action: 'login', name: v.name, phone: v.phone, dong: v.dong, ho: v.ho });
+      if (!r.ok) { showCommonLogin(r.message || r.error, 'bad', v); return; }
+      sid = r.sid; data = r.data;
+      if (r.token) { token = r.token; try { history.replaceState(null, '', location.pathname + '?t=' + encodeURIComponent(token)); } catch (e) {} store.set('sid_' + token, sid); }
+      showHome();
+    } catch (e) { showCommonLogin('연결에 실패했습니다. 잠시 후 다시 시도해 주세요. (' + e.message + ')', 'bad', v); }
+  };
+  $('#go').onclick = go; $('#ho').onkeydown = e => { if (e.key === 'Enter') go(); };
+}
+
+function showLogin(msg, kind) {
+  if (!token) { showCommonLogin(msg, kind); return; }
+  app.innerHTML = `
+    <div class="card">
+      <h2>본인 확인</h2>
+      <p>이 화면에서는 <b>본인의 서류</b>(위임장·사실확인서·진술서·개인정보 동의서)와 <b>고소장 본문</b>만 볼 수 있습니다.</p>
+      <label for="pin">등록하신 휴대폰 번호의 뒷 4자리</label>
+      <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0000">
+      ${msg ? '<div class="msg ' + (kind || 'bad') + '">' + esc(msg) + '</div>' : ''}
+      <p style="margin-top:14px"><button class="btn" id="go">확인</button></p>
+    </div>`;
+  const pin = $('#pin'); pin.focus();
+  const go = async () => {
+    const v = pin.value.replace(/\D/g, '');
+    if (v.length !== 4) { showLogin('숫자 4자리를 입력해 주세요.'); return; }
+    $('#go').disabled = true; $('#go').textContent = '확인 중…';
+    try {
+      const r = await api({ action: 'login', t: token, pin: v });
+      if (!r.ok) { showLogin(r.message || r.error); return; }
+      sid = r.sid; store.set('sid_' + token, sid); data = r.data; showHome();
+    } catch (e) { showLogin('연결에 실패했습니다. 잠시 후 다시 시도해 주세요. (' + e.message + ')'); }
+  };
+  $('#go').onclick = go; pin.onkeydown = e => { if (e.key === 'Enter') go(); };
+}
+
+// ── 2) 서류 목록 ──
+function showHome(flash) {
+  window.scrollTo(0, 0);
+  if (data.contact) $('#contact').href = data.contact;
+  $('#hdrSub').textContent = data.name + '님 · ' + data.unit + (data.role === '참고인' ? ' · 참고인' : '');
+  const items = data.items, done = items.filter(i => i.status === '완료').length;
+  const changed = items.filter(i => i.status === '재서명 필요').length + (data.complaint && data.complaint.status === '재서명 필요' ? 1 : 0);
+  const cst = data.complaint ? (data.complaint.status === '완료' ? '확인' : data.complaint.status === '재서명 필요' ? '재서명 필요' : '열람') : '';
+  app.innerHTML = `
+    ${flash ? '<div class="msg ok">' + esc(flash) + '</div>' : ''}
+    <div class="card">
+      <h2>${esc(data.name)}님의 서류</h2>
+      <p style="margin:0">서명 ${done} / ${items.length}건 완료</p>
+      <div class="progress"><i style="width:${items.length ? Math.round(done * 100 / items.length) : 0}%"></i></div>
+      ${changed ? '<div class="msg bad">내용이 수정된 서류가 ' + changed + '건 있습니다. 다시 읽고 서명(확인)해 주세요.</div>' : ''}
+      ${done === items.length && !changed ? '<div class="msg ok">모든 서류에 서명하셨습니다. 감사합니다.</div>' : ''}
+    </div>
+    <div class="list">
+      ${data.complaint ? '<p style="font-size:14px;color:var(--sub);margin:0 0 8px">① 먼저 고소장을 읽어 주세요</p>' : ''}
+      ${data.complaint ? `<button class="item" data-k="complaint"><span class="t">${esc(data.complaint.title)}<span class="s">공동 고소장 본문 · 읽고 확인</span></span>${badge(cst)}</button>` : ''}
+      <p style="font-size:14px;color:var(--sub);margin:14px 0 8px">${data.complaint ? '②' : '①'} 본인 서류를 확인하고 서명해 주세요</p>
+      ${items.map((it, i) => `<button class="item" data-k="${i}"><span class="t">${esc(it.title)}<span class="s">${it.signedAt ? '서명일시 ' + esc(it.signedAt) : (it.locked ? '필수 서류 확인 후 서명할 수 있습니다' : '서명 필요')}</span></span>${it.locked && it.status !== '완료' ? '<span class="badge b-warn">서류 확인 후</span>' : badge(it.status)}</button>`).join('')}
+      ${data.docs ? `<p style="font-size:14px;color:var(--sub);margin:14px 0 8px">${data.complaint ? '③' : '②'} 필수 서류</p>
+      <button class="item" data-k="docs"><span class="t">필수 서류 제출<span class="s">${esc(data.docs.need || '분양대금납부확인서')}</span></span>${docBadge(data.docs)}</button>` : ''}
+      ${data.recordings && data.recordings.length ? `<p style="font-size:14px;color:var(--sub);margin:14px 0 8px">${data.complaint ? '④' : '③'} 녹취 확인</p>
+      <button class="item" data-k="recs"><span class="t">녹음 파일 확인<span class="s">제출하신 녹취 ${data.recordings.length}건 – 누가·언제·누구와 녹음했는지</span></span>${(() => { const n = data.recordings.filter(r => r.answer).length; return n === data.recordings.length ? '<span class="badge b-ok">확인 완료</span>' : '<span class="badge b-warn">' + n + '/' + data.recordings.length + ' 확인</span>'; })()}</button>` : ''}
+    </div>
+    ${data.isRep ? '<div class="msg warn">고소인 대표님은 위임장 대신 고소장 원본에 자필로 서명합니다.</div>' : ''}
+    <p style="font-size:13px;color:var(--sub)">문서 버전: ${esc(data.version)}</p>`;
+  app.querySelectorAll('.item').forEach(b => b.onclick = () => { const k = b.dataset.k; k === 'complaint' ? showComplaint() : k === 'docs' ? showUpload() : k === 'recs' ? showRecs() : showDoc(Number(k)); });
+}
+
+// 대화 상대 질문: 추정 직원 1명 → 맞는지 확인 / 2명 이상 → 누구인지 선택 / 없음 → 직접 입력
+function staffQ(r, i, a, sel, inp) {
+  const st = r.staff || [], nm = s => s.name ? s.name + ' ' + s.title : s.title + '(성함 미상)';
+  const other = '<div id="rcBox' + i + '" class="hide"><label>실제 대화 상대(이름·직책·소속)</label>' + inp('rc' + i, a.counterpart, '예: 시행사 ○○○ 부장') + '</div>';
+  if (st.length === 1) {
+    const prev = a.staffCheck === '추정 일치' ? '예, 맞습니다' : a.staffCheck === '추정과 다름' ? '아니오, 다른 사람입니다' : a.staffCheck === '모름' ? '모르겠습니다' : '';
+    return '<label>이 녹음의 대화 상대가 <b>' + esc(nm(st[0])) + '</b>이(가) 맞습니까?</label>' + sel('rs' + i, ['예, 맞습니다', '아니오, 다른 사람입니다', '모르겠습니다'], prev) + other;
+  }
+  if (st.length > 1) {
+    const prev = /^선택: /.test(a.staffCheck || '') ? a.staffCheck.replace('선택: ', '') : a.staffCheck === '추정과 다름' ? '그 밖의 사람' : a.staffCheck === '모름' ? '모르겠습니다' : '';
+    return '<label>이 녹음은 다음 상담직원 중 <b>누구와 나눈 대화</b>입니까?</label>' + sel('rs' + i, [...st.map(nm), '그 밖의 사람', '모르겠습니다'], prev) + other;
+  }
+  return '<label>대화 상대(이름·직책·소속)' + (r.hint ? ' – 파일명상 ' + esc(r.hint) : '') + '</label>' + inp('rc' + i, a.counterpart, '예: 김규민 실장(분양사무소)');
+}
+function staffAnswer(r, v) {
+  const st = r.staff || [], nm = s => s.name ? s.name + ' ' + s.title : s.title + '(성함 미상)', s = v('rs'), typed = v('rc').trim();
+  if (!st.length) return { counterpart: typed, check: typed ? '직접 입력' : '' };
+  if (!s) return { error: '대화 상대 질문에 답해 주세요.' };
+  if (st.length === 1) {
+    if (s.startsWith('예')) return { counterpart: nm(st[0]), check: '추정 일치' };
+    if (s.startsWith('모르')) return { counterpart: '', check: '모름' };
+    if (!typed) return { error: '실제 대화 상대를 적어 주세요.' };
+    return { counterpart: typed, check: '추정과 다름' };
+  }
+  if (s === '모르겠습니다') return { counterpart: '', check: '모름' };
+  if (s === '그 밖의 사람') { if (!typed) return { error: '실제 대화 상대를 적어 주세요.' }; return { counterpart: typed, check: '추정과 다름' }; }
+  return { counterpart: s, check: '선택: ' + s };
+}
+
+// ── 3-d) 녹취 확인(녹음자·일시·대화 상대) ──
+function showRecs(flash) {
+  window.scrollTo(0, 0);
+  const sel = (id, opts, v) => '<select id="' + id + '" style="width:100%;font-size:17px;padding:10px;border:2px solid var(--line);border-radius:10px"><option value="">선택</option>' + opts.map(o => '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select>';
+  const inp = (id, v, ph) => '<input id="' + id + '" type="text" value="' + esc(v || '') + '" placeholder="' + esc(ph || '') + '" style="width:100%;font-size:17px;padding:10px;border:2px solid var(--line);border-radius:10px">';
+  app.innerHTML = `
+    <button class="back" id="back">← 서류 목록</button>
+    ${flash ? '<div class="msg ok">' + esc(flash) + '</div>' : ''}
+    <div class="card"><h2>녹취 확인</h2>
+      <p>제출하신 녹음 파일을 수사기관에 증거로 내려면 <b>누가, 언제, 누구와</b> 녹음했는지 확인이 필요합니다. 대화에 참여한 사람이 직접 녹음한 것이어야 증거로 쓸 수 있습니다. 공동명의 세대는 한 분만 입력하셔도 됩니다.</p></div>
+    ${data.recordings.map((r, i) => { const a = r.answer || {}; return `
+    <div class="card">
+      <h2 style="font-size:17px">${i + 1}. ${esc(r.label)}</h2>
+      <p style="font-size:14px;color:var(--sub);margin:0">파일: ${esc(r.file)}${r.duration ? ' · 길이 ' + esc(r.duration) : ''}</p>
+      ${r.answer ? '<div class="msg ok">입력됨 (' + esc(a.at) + ', ' + esc(a.by) + ') – 고칠 내용이 있으면 다시 저장하세요.</div>' : ''}
+      <label>녹음한 사람</label>${sel('rr' + i, ['본인', '같은 세대 가족(공동명의자 포함)', '그 밖의 사람'], a.recorder)}
+      <label>녹음한 사람 성명(본인이 아닌 경우)</label>${inp('rn' + i, a.recorderName, '예: 홍길동(배우자)')}
+      <label>녹음 날짜(대략이라도)</label>${inp('rd' + i, a.date || r.dateGuess, '예: 2024-08-19 또는 2024년 8월')}
+      ${staffQ(r, i, a, sel, inp)}
+      <label>녹음 방식</label>${sel('rm' + i, ['대면', '전화', '모름'], a.mode)}
+      <label>녹음한 사람이 그 대화에 직접 참여했나요?</label>${sel('rp' + i, ['예', '아니오', '모름'], a.participated)}
+      <label>메모(선택)</label>${inp('ro' + i, a.memo, '예: 계약 전 상담 때 휴대폰으로 녹음')}
+      <p style="margin-top:12px"><button class="btn" data-r="${i}">저장</button></p><div id="rmsg${i}"></div>
+    </div>`; }).join('')}`;
+  $('#back').onclick = () => showHome();
+  // 추정 직원 질문: '아니오/그 밖의 사람'을 고르면 직접 입력란 표시
+  data.recordings.forEach((r, i) => { const s = $('#rs' + i), box = $('#rcBox' + i); if (s && box) { const f = () => box.classList.toggle('hide', !/아니오|그 밖의 사람/.test(s.value)); s.onchange = f; f(); } });
+  app.querySelectorAll('button[data-r]').forEach(b => b.onclick = async () => {
+    const i = Number(b.dataset.r), r = data.recordings[i], v = id => { const e = $('#' + id + i); return e ? e.value : ''; };
+    if (!v('rr') || !v('rp')) { $('#rmsg' + i).innerHTML = '<div class="msg bad">녹음한 사람과 대화 참여 여부를 선택해 주세요.</div>'; return; }
+    const st = staffAnswer(r, v);
+    if (st.error) { $('#rmsg' + i).innerHTML = '<div class="msg bad">' + esc(st.error) + '</div>'; return; }
+    b.disabled = true; b.textContent = '저장 중…';
+    const res = await call({ action: 'recinfo', sid, recId: r.id, recorder: v('rr'), recorderName: v('rn'), date: v('rd'), counterpart: st.counterpart, staffCheck: st.check, mode: v('rm'), participated: v('rp'), memo: v('ro') }, $('#rmsg' + i));
+    if (res) { data = res.data; showRecs((i + 1) + '번 녹취 정보를 저장했습니다.'); } else { b.disabled = false; b.textContent = '저장'; }
+  });
+}
+
+function docBadge(dc) {
+  if (!dc.missing) return '<span class="badge b-ok">제출 완료</span>';
+  if (dc.confirm === '완료') return '<span class="badge b-ok">확인 완료</span>';
+  if (dc.confirm === '보완 필요') return '<span class="badge b-bad">보완 필요</span>';
+  return dc.uploads && dc.uploads.length ? '<span class="badge b-warn">제출됨 · 확인 중</span>' : '<span class="badge b-bad">제출 필요</span>';
+}
+
+// ── 3-c) 필수 서류 제출 ──
+function showUpload(flash) {
+  window.scrollTo(0, 0);
+  const dc = data.docs, ups = dc.uploads || [];
+  const certGuide = `<div class="msg warn" style="color:var(--ink)"><b>분양대금납부확인서 발급 방법</b><br>
+    ① 푸르지오 홈페이지(<a href="https://www.prugio.com" target="_blank" rel="noopener">prugio.com</a>)에 로그인<br>
+    ② <b>마이 푸르지오</b> → <b>민원서류 신청</b> → <b>분양대금납부확인서</b><br>
+    ③ <b>[분양]</b>, <b>[발코니]</b>, <b>[PLUS옵션]</b>을 각각 선택해 출력하거나 PDF로 저장(옵션을 계약하지 않았으면 PLUS옵션 제외)<br>
+    ④ 아래에서 종류를 고른 뒤 파일(PDF) 또는 사진을 올려 주세요.</div>`;
+  app.innerHTML = `
+    <button class="back" id="back">← 서류 목록</button>
+    ${flash ? '<div class="msg ok">' + esc(flash) + '</div>' : ''}
+    <div class="card">
+      <h2>필수 서류 제출</h2>
+      <p style="margin:0"><b>필요 서류:</b> ${esc(dc.need || '분양대금납부확인서')}</p>
+      ${dc.missing ? (dc.confirm === '완료' ? '<div class="msg ok">제출하신 서류를 비대위가 확인했습니다.</div>' : '<div class="msg bad"><b>아직 확인되지 않은 서류:</b> ' + esc(dc.missing) + (dc.confirm === '보완 필요' ? '<br>제출하신 서류에 보완이 필요합니다. 비대위 안내를 확인해 주세요.' : '') + '</div>') : '<div class="msg ok">필수 서류가 모두 확인되었습니다. 추가 자료가 있으면 아래에서 올려 주셔도 됩니다.</div>'}
+      <p style="font-size:14px;color:var(--sub)">공동명의 세대는 한 분만 제출하시면 됩니다. 계약서는 앞면과 뒷면을 모두 올려 주세요(권리양수인은 뒷면의 권리·의무 승계 내역이 보이게). 중개업소를 통해 분양권을 사신 분은 분양권 매매계약서(또는 실거래 신고필증)도 올려 주세요.</p>
+      ${certGuide}
+      <label for="kind">서류 종류</label>
+      <select id="kind" style="width:100%;font-size:17px;padding:12px;border:2px solid var(--line);border-radius:10px">${dc.kinds.map(k => '<option>' + esc(k) + '</option>').join('')}</select>
+      <label for="file">파일 선택 (사진 또는 PDF, 여러 개 가능)</label>
+      <input id="file" type="file" accept="image/*,application/pdf" multiple style="width:100%;font-size:16px">
+      <p style="margin-top:12px"><button class="btn" id="up" disabled>올리기</button></p>
+      <div id="upMsg"></div>
+    </div>
+    <div class="card"><h2>제출 내역(우리 세대)</h2>
+      ${ups.length ? '<div class="tw"><table class="grid small"><tr><td>제출일시</td><td>제출자</td><td>종류</td><td>파일</td><td>상태</td></tr>' + ups.map(u => '<tr><td>' + esc(u.at) + '</td><td>' + esc(u.by) + '</td><td>' + esc(u.kind) + '</td><td>' + esc(u.name) + '</td><td>' + esc(u.state) + (u.memo ? '<br>' + esc(u.memo) : '') + '</td></tr>').join('') + '</table></div>' : '<p>아직 이 화면으로 제출한 서류가 없습니다. (설문 때 올리신 서류는 이미 반영되어 있습니다.)</p>'}
+    </div>`;
+  $('#back').onclick = () => showHome();
+  $('#file').onchange = e => $('#up').disabled = !e.target.files.length;
+  $('#up').onclick = async () => {
+    const files = [...$('#file').files], kind = $('#kind').value; if (!files.length) return;
+    $('#up').disabled = true; let okN = 0;
+    for (let i = 0; i < files.length; i++) {
+      $('#upMsg').innerHTML = '<div class="msg warn">올리는 중… (' + (i + 1) + '/' + files.length + ') ' + esc(files[i].name) + '</div>';
+      try {
+        const f = await prepFile(files[i]);
+        const r = await call({ action: 'upload', sid, kind, name: f.name, mime: f.mime, data: f.data }, $('#upMsg'));
+        if (!r) { $('#up').disabled = false; return; }
+        data = r.data; okN++;
+      } catch (e) { $('#upMsg').innerHTML = '<div class="msg bad">' + esc(files[i].name) + ': ' + esc(e.message) + '</div>'; $('#up').disabled = false; return; }
+    }
+    showUpload(okN + '개 파일을 올렸습니다. 비대위가 확인한 뒤 상태가 바뀝니다.');
+  };
+}
+
+// 사진은 긴 변 2000px JPEG로 줄여서, PDF는 그대로(15MB 이하) 보냄
+async function prepFile(file) {
+  const toB64 = buf => { let s = '', b = new Uint8Array(buf); for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); };
+  if (file.type === 'application/pdf') {
+    if (file.size > 15 * 1024 * 1024) throw new Error('PDF는 15MB 이하만 올릴 수 있습니다.');
+    return { name: file.name, mime: 'application/pdf', data: toB64(await file.arrayBuffer()) };
+  }
+  if (!/^image\//.test(file.type)) throw new Error('사진 또는 PDF만 올릴 수 있습니다.');
+  try {
+    const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); });
+    const s = Math.min(1, 2000 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+    const url = c.toDataURL('image/jpeg', 0.85);
+    return { name: file.name.replace(/\.[^.]+$/, '') + '.jpg', mime: 'image/jpeg', data: url.split(',')[1] };
+  } catch (e) { // 브라우저가 열지 못하는 형식(HEIC 등)은 원본 그대로
+    if (file.size > 15 * 1024 * 1024) throw new Error('파일이 너무 큽니다(15MB 이하).');
+    return { name: file.name, mime: file.type || 'image/heic', data: toB64(await file.arrayBuffer()) };
+  }
+}
+
+// ── 3-a) 고소장 열람 ──
+function showComplaint() {
+  window.scrollTo(0, 0);
+  const c = data.complaint, ok = c.status === '완료';
+  app.innerHTML = `
+    <button class="back" id="back">← 서류 목록</button>
+    ${c.status === '재서명 필요' ? '<div class="msg bad">고소장 내용이 수정되었습니다. 다시 읽고 확인해 주세요.</div>' : ''}
+    <div class="doc">${renderBlocks(c.blocks)}</div>
+    <div class="card" style="margin-top:14px">
+      ${ok ? '<div class="msg ok">고소장 확인 완료 (' + esc(c.signedAt) + ')</div>' : `
+      <label class="check"><input type="checkbox" id="chk"> 고소장 내용을 끝까지 읽고 확인했습니다.</label>
+      <button class="btn" id="ack" disabled>확인 완료</button>`}
+      <p style="margin-top:10px"><button class="btn btn-sub" id="back2" style="width:100%">서류 목록으로</button></p>
+    </div>`;
+  $('#back').onclick = $('#back2').onclick = () => showHome();
+  if (!ok) {
+    $('#chk').onchange = e => $('#ack').disabled = !e.target.checked;
+    $('#ack').onclick = async () => {
+      $('#ack').disabled = true; $('#ack').textContent = '저장 중…';
+      const r = await call({ action: 'ack', sid, hash: c.hash, ua: navigator.userAgent });
+      if (r) { data = r.data; showHome('고소장 확인이 저장되었습니다.'); }
+    };
+  }
+}
+
+// ── 3-b) 본인 서류 열람·서명 ──
+function showDoc(i) {
+  window.scrollTo(0, 0);
+  const it = data.items[i], done = it.status === '완료', canReq = it.type === '사실확인서' || it.type === '진술서';
+  app.innerHTML = `
+    <button class="back" id="back">← 서류 목록</button>
+    ${it.status === '재서명 필요' ? '<div class="msg bad">서명하신 뒤 내용이 수정되었습니다. 수정된 내용을 다시 읽고 서명해 주세요. 이전 서명은 효력이 없습니다.</div>' : ''}
+    <div class="doc">${renderBlocks(it.blocks)}</div>
+    <div class="card" style="margin-top:14px" id="signBox">
+      ${done ? `<div class="msg ok">서명 완료 (${esc(it.signedAt)})</div>` : it.locked ? `<div class="msg warn">필수 서류(${esc(data.docs.missing)})를 제출하고 비대위 확인이 끝나면 서명할 수 있습니다. 서류 내용에 따라 이 문서가 고쳐질 수 있기 때문입니다.</div>
+        <p><button class="btn" id="goUp">필수 서류 제출하러 가기</button></p>` : `
+        <h2>전자서명</h2>
+        <label class="check"><input type="checkbox" id="chk"> 위 내용을 끝까지 읽었고, 사실과 다름이 없음을 확인합니다.</label>
+        <p style="margin:6px 0">아래 칸에 손가락(또는 마우스)으로 <b>성명</b>을 써 주세요.</p>
+        <div class="pad-wrap"><canvas id="pad"></canvas><div class="pad-hint" id="hint">여기에 서명</div></div>
+        <div class="row" style="margin-top:10px"><button class="btn-sub" id="clear">지우기</button><button class="btn" id="sign" disabled>서명 제출</button></div>
+        <div id="err"></div>`}
+      ${canReq ? `<p style="margin-top:14px"><button class="btn btn-sub" id="reqBtn" style="width:100%">내용이 사실과 달라요 (수정 요청)</button></p>
+        <div id="reqBox" class="hide"><label for="reqText">고칠 내용을 적어 주세요</label><textarea id="reqText" maxlength="2000" placeholder="예) 상담 직원 이름은 ○○○ 실장입니다."></textarea>
+        <p><button class="btn" id="reqSend">수정 요청 보내기</button></p><div id="reqMsg"></div></div>` : ''}
+      <p style="margin-top:10px"><button class="btn btn-sub" id="back2" style="width:100%">서류 목록으로</button></p>
+    </div>`;
+  $('#back').onclick = $('#back2').onclick = () => showHome();
+  if (canReq) {
+    $('#reqBtn').onclick = () => $('#reqBox').classList.toggle('hide');
+    $('#reqSend').onclick = async () => {
+      const text = $('#reqText').value.trim(); if (text.length < 2) { $('#reqMsg').innerHTML = '<div class="msg bad">내용을 입력해 주세요.</div>'; return; }
+      $('#reqSend').disabled = true;
+      const r = await call({ action: 'request', sid, type: it.type, text });
+      $('#reqSend').disabled = false;
+      if (r) { $('#reqMsg').innerHTML = '<div class="msg ok">' + esc(r.message) + '</div>'; $('#reqText').value = ''; }
+    };
+  }
+  if (done) return;
+  if (it.locked) { $('#goUp').onclick = () => showUpload(); return; }
+  const pad = makePad($('#pad'), () => { $('#hint').classList.add('hide'); update(); });
+  const update = () => $('#sign').disabled = !($('#chk').checked && pad.ink() > 60);
+  $('#chk').onchange = update;
+  $('#clear').onclick = () => { pad.clear(); $('#hint').classList.remove('hide'); update(); };
+  $('#sign').onclick = async () => {
+    $('#sign').disabled = true; $('#sign').textContent = '저장 중…';
+    const r = await call({ action: 'sign', sid, type: it.type, hash: it.hash, sig: pad.png(), ua: navigator.userAgent }, $('#err'));
+    if (r) { data = r.data; showHome(it.title + ' 서명이 저장되었습니다.'); } else { $('#sign').textContent = '서명 제출'; update(); }
+  };
+}
+
+async function call(body, errEl) {
+  try {
+    const r = await api(body);
+    if (r.ok) return r;
+    if (r.error === 'SESSION') { store.del('sid_' + token); showLogin(r.message, 'warn'); return null; }
+    if (r.error === 'CHANGED') { await reload(); showHome(); alert(r.message); return null; }
+    const m = r.message || r.error || '오류가 발생했습니다.';
+    if (errEl) errEl.innerHTML = '<div class="msg bad">' + esc(m) + '</div>'; else alert(m);
+  } catch (e) { const m = '연결에 실패했습니다. 잠시 후 다시 시도해 주세요.'; if (errEl) errEl.innerHTML = '<div class="msg bad">' + m + '</div>'; else alert(m); }
+  return null;
+}
+async function reload() { const r = await api({ action: 'get', sid }); if (r.ok) data = r.data; }
+
+// ── 서명 패드 ──
+function makePad(cv, onDraw) {
+  const ctx = cv.getContext('2d'); let drawing = false, last = null, ink = 0;
+  const fit = () => { const r = cv.getBoundingClientRect(), dpr = Math.max(1, window.devicePixelRatio || 1); const img = ink ? cv.toDataURL() : null; cv.width = r.width * dpr; cv.height = r.height * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#111'; if (img) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, r.width, r.height); im.src = img; } };
+  fit(); window.addEventListener('resize', fit);
+  const pos = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.setPointerCapture(e.pointerId); drawing = true; last = pos(e); });
+  cv.addEventListener('pointermove', e => { if (!drawing) return; e.preventDefault(); const p = pos(e); ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); ink += Math.hypot(p.x - last.x, p.y - last.y); last = p; onDraw(); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => cv.addEventListener(t, () => drawing = false));
+  return {
+    ink: () => ink,
+    clear: () => { ctx.clearRect(0, 0, cv.width, cv.height); ink = 0; },
+    png: () => { const out = document.createElement('canvas'); out.width = 600; out.height = Math.round(600 * cv.height / cv.width); const o = out.getContext('2d'); o.fillStyle = '#fff'; o.fillRect(0, 0, out.width, out.height); o.drawImage(cv, 0, 0, out.width, out.height); return out.toDataURL('image/png'); }
+  };
+}
+
+// ── 시작 ──
+(async () => {
+  sid = store.get('sid_' + token);
+  if (sid) { try { const r = await api({ action: 'get', sid }); if (r.ok) { data = r.data; showHome(); return; } } catch (e) {} store.del('sid_' + token); }
+  showLogin();
+})();
+</script>
+</body>
+</html>
