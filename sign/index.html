@@ -296,7 +296,7 @@ function showUpload(flash) {
     .concat([{ kind: OTHER_KIND, label: '그 밖의 자료(선택)', st: '', req: false, note: '위 칸에 해당하지 않는 자료가 있으면 여기에 올려 주세요.' }]);
   const known = slots.map(s => s.kind);
   const listOf = s => ups.filter(u => u.kind === s.kind || (s.kind === OTHER_KIND && known.indexOf(u.kind) < 0));
-  const group = k => /^(계약서|매매계약서)/.test(k) ? '계약서류' : /^분양대금납부확인서/.test(k) ? '분양대금납부확인서' : k === OTHER_KIND ? '그 밖의 자료' : '추가로 요청드린 서류';
+  const group = k => /^(계약서|매매계약서|증여계약서)/.test(k) ? '계약서류' : /^분양대금납부확인서/.test(k) ? '분양대금납부확인서' : k === OTHER_KIND ? '그 밖의 자료' : '추가로 요청드린 서류';
   let lastG = '', html = '';
   slots.forEach((s, i) => {
     const g = group(s.kind), list = listOf(s);
