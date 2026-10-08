@@ -270,12 +270,11 @@ function slotHelp(kind) {
     <p style="font-size:14px;margin:8px 0 0"><b>③ 분양권 매매계약서</b> – 분양권을 넘겨받으며 쓴 계약서</p>${imgTag('sample/03_deal.png', '분양권 매매계약서 예시')}
     <p style="font-size:14px;margin:12px 0 0"><b>④ 중개업소 매매계약서</b> – 부동산 중개업소에서 쓴 계약서(아래쪽에 중개사 상호·도장)</p>${imgTag('sample/04_broker.png', '중개업소 매매계약서 예시')}
     <p style="font-size:14px;margin:8px 0 0">둘 중 가지고 계신 것을 올리시면 됩니다. 둘 다 있으면 모두 올려 주세요.</p></details>`;
-  if (kind === '분양대금납부확인서(분양)') return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>발급 방법 보기</b></summary><p style="font-size:14px;margin:6px 0">
+  if (/^분양대금납부확인서/.test(kind)) return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>발급 방법 보기</b></summary><p style="font-size:14px;margin:6px 0">
     ① 푸르지오 홈페이지(<a href="https://www.prugio.com" target="_blank" rel="noopener">prugio.com</a>)에 로그인<br>
     ② <b>마이 푸르지오</b> → <b>민원서류 신청</b> → <b>분양대금납부확인서</b><br>
     ③ <b>[분양]</b>, <b>[발코니]</b>, <b>[PLUS옵션]</b>을 각각 선택해 PDF로 저장하거나 출력해 찍기<br>
     ④ 종류에 맞는 칸에 하나씩 올리기</p></details>`;
-  if (/^분양대금납부확인서/.test(kind)) return '<p style="font-size:14px;color:var(--sub);margin:4px 0">발급 방법은 위 (분양) 칸과 같습니다.</p>';
   return '';
 }
 function slotBadge(s, list) {
@@ -301,14 +300,18 @@ function showUpload(flash) {
   slots.forEach((s, i) => {
     const g = group(s.kind), list = listOf(s);
     if (g !== lastG) { html += `<h3 style="margin:22px 0 4px;font-size:17px;color:var(--brand)">${esc(g)}</h3>`; lastG = g; }
-    html += `<div style="border:2px solid ${s.st === '미제출' && !list.length ? '#f2b8b5' : 'var(--line)'};border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:17px">${esc(s.label)}</b>${slotBadge(s, list)}</div>
-      ${s.note ? '<p style="font-size:14px;margin:6px 0">' + esc(s.note) + '</p>' : ''}
-      ${s.st === '제출완료' && !list.length ? '<p style="font-size:14px;color:var(--sub);margin:6px 0">이미 받은 자료로 확인되었습니다. 다시 올리지 않으셔도 됩니다.</p>' : ''}
-      ${slotHelp(s.kind)}
-      ${list.length ? '<ul style="font-size:14px;margin:6px 0 6px 18px;padding:0">' + list.map(u => '<li>' + esc(u.name) + ' <span style="color:var(--sub)">(' + esc(u.by) + ', ' + esc(u.at) + ' · ' + esc(u.state) + ')</span>' + (u.memo ? '<br><span style="color:#b3261e">' + esc(u.memo) + '</span>' : '') + '</li>').join('') + '</ul>' : ''}
+    // 이미 확인된 칸(기존 자료로 제출완료, 또는 올린 파일이 모두 '확인')은 업로드 칸을 접어 둠. '보완 필요'면 다시 펼침
+    const redo = list.some(u => u.state === '보완 필요');
+    const done = !redo && ((s.st === '제출완료' && !list.length) || (list.length > 0 && list.every(u => /확인/.test(u.state) && !/미확인/.test(u.state))));
+    const upBox = `${slotHelp(s.kind)}
       <input id="f${i}" type="file" accept="image/*,application/pdf" multiple style="width:100%;font-size:16px;margin-top:6px">
-      <p style="margin:8px 0 0"><button class="btn" id="u${i}" disabled>올리기</button></p>
+      <p style="margin:8px 0 0"><button class="btn" id="u${i}" disabled>올리기</button></p>`;
+    html += `<div style="border:2px solid ${s.st === '미제출' && !list.length ? '#f2b8b5' : 'var(--line)'};border-radius:12px;padding:12px 14px;margin:10px 0;background:${done ? '#f7faf8' : '#fff'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:17px">${esc(s.label)}</b>${slotBadge(s, list)}</div>
+      ${s.note && !done ? '<p style="font-size:14px;margin:6px 0">' + esc(s.note) + '</p>' : ''}
+      ${s.st === '제출완료' && !list.length ? '<p style="font-size:14px;color:var(--sub);margin:6px 0">이미 받은 자료로 확인되었습니다. 다시 올리지 않으셔도 됩니다.</p>' : ''}
+      ${list.length ? '<ul style="font-size:14px;margin:6px 0 6px 18px;padding:0">' + list.map(u => '<li>' + esc(u.name) + ' <span style="color:var(--sub)">(' + esc(u.by) + ', ' + esc(u.at) + ' · ' + esc(u.state) + ')</span>' + (u.memo ? '<br><span style="color:#b3261e">' + esc(u.memo) + '</span>' : '') + '</li>').join('') + '</ul>' : ''}
+      ${done ? '<details style="margin-top:4px"><summary style="font-size:14px;color:var(--sub)">다른 파일을 추가로 올리기</summary>' + upBox + '</details>' : upBox}
       <div id="m${i}"></div></div>`;
   });
   app.innerHTML = `
