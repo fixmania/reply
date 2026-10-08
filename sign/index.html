@@ -276,56 +276,87 @@ function docBadge(dc) {
   return dc.uploads && dc.uploads.length ? '<span class="badge b-warn">제출됨 · 확인 중</span>' : '<span class="badge b-bad">제출 필요</span>';
 }
 
-// ── 3-c) 필수 서류 제출 ──
+// ── 3-c) 필수 서류 제출: 세대별 필요 서류마다 업로드 칸 (계약서류 → 분양대금납부확인서 → 추가 서류 → 기타) ──
+const OTHER_KIND = '기타 자료';
+const SLOT_DEFAULT = [
+  { kind: '계약서 앞면', label: '공급계약서 앞면', st: '', req: true },
+  { kind: '계약서 뒷면(권리·의무 승계 내역)', label: '공급계약서 뒷면', st: '', req: true },
+  { kind: '분양대금납부확인서(분양)', label: '분양대금납부확인서(분양)', st: '', req: true }];
+const imgTag = (src, alt) => `<img src="${src}" alt="${alt}" style="width:100%;border:1px solid var(--line);border-radius:8px;margin-top:6px">`;
+function slotHelp(kind) {
+  if (kind === '계약서 앞면') return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>사진 예시 보기</b></summary>
+    <p style="font-size:14px;margin:6px 0">'공급계약서 전문'이라고 적힌 계약서입니다(발코니확장·플러스옵션 계약서가 아님). 종이 한 장의 네 모서리가 다 보이게 찍어 주세요. 주민등록번호 뒷자리는 가려도 됩니다.</p>${imgTag('sample/01_front.png', '공급계약서 앞면 예시')}</details>`;
+  if (kind === '계약서 뒷면(권리·의무 승계 내역)') return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>사진 예시 보기</b></summary>
+    <p style="font-size:14px;margin:6px 0">아래쪽 '권리의무 승계내역' 표까지 한 화면에 나오게 찍어 주세요. 표가 비어 있어도 그대로 올려 주세요.</p>${imgTag('sample/02_back.png', '공급계약서 뒷면 예시')}</details>`;
+  if (kind === '분양권 매매계약서·실거래 신고필증') return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>사진 예시 보기</b></summary>${imgTag('sample/03_deal.png', '분양권 매매계약서 예시')}</details>`;
+  if (kind === '분양대금납부확인서(분양)') return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>발급 방법 보기</b></summary><p style="font-size:14px;margin:6px 0">
+    ① 푸르지오 홈페이지(<a href="https://www.prugio.com" target="_blank" rel="noopener">prugio.com</a>)에 로그인<br>
+    ② <b>마이 푸르지오</b> → <b>민원서류 신청</b> → <b>분양대금납부확인서</b><br>
+    ③ <b>[분양]</b>, <b>[발코니]</b>, <b>[PLUS옵션]</b>을 각각 선택해 PDF로 저장하거나 출력해 찍기<br>
+    ④ 종류에 맞는 칸에 하나씩 올리기</p></details>`;
+  if (/^분양대금납부확인서/.test(kind)) return '<p style="font-size:14px;color:var(--sub);margin:4px 0">발급 방법은 위 (분양) 칸과 같습니다.</p>';
+  return '';
+}
+function slotBadge(s, list) {
+  if (list.length) {
+    if (list.some(u => u.state === '보완 필요')) return '<span class="badge b-bad">보완 필요</span>';
+    if (list.every(u => /확인/.test(u.state) && !/미확인/.test(u.state))) return '<span class="badge b-ok">확인 완료</span>';
+    return '<span class="badge b-warn">제출됨 · 확인 중</span>';
+  }
+  if (s.st === '제출완료') return '<span class="badge b-ok">제출 완료</span>';
+  if (s.st === '미제출') return '<span class="badge b-bad">제출 필요</span>';
+  if (s.st === '권장') return '<span class="badge" style="background:#eef1f5;color:#5a6675">제출 권장</span>';
+  return '<span class="badge" style="background:#eef1f5;color:#5a6675">선택</span>';
+}
 function showUpload(flash) {
   window.scrollTo(0, 0);
   const dc = data.docs, ups = dc.uploads || [];
-  const certGuide = `<div class="msg warn" style="color:var(--ink)"><b>분양대금납부확인서 발급 방법</b><br>
-    ① 푸르지오 홈페이지(<a href="https://www.prugio.com" target="_blank" rel="noopener">prugio.com</a>)에 로그인<br>
-    ② <b>마이 푸르지오</b> → <b>민원서류 신청</b> → <b>분양대금납부확인서</b><br>
-    ③ <b>[분양]</b>, <b>[발코니]</b>, <b>[PLUS옵션]</b>을 각각 선택해 출력하거나 PDF로 저장(옵션을 계약하지 않았으면 PLUS옵션 제외)<br>
-    ④ 아래에서 종류를 고른 뒤 파일(PDF) 또는 사진을 올려 주세요.</div>`;
+  const slots = (dc.slots && dc.slots.length ? dc.slots : SLOT_DEFAULT).filter(s => s.kind !== OTHER_KIND)
+    .concat([{ kind: OTHER_KIND, label: '그 밖의 자료(선택)', st: '', req: false, note: '위 칸에 해당하지 않는 자료가 있으면 여기에 올려 주세요.' }]);
+  const known = slots.map(s => s.kind);
+  const listOf = s => ups.filter(u => u.kind === s.kind || (s.kind === OTHER_KIND && known.indexOf(u.kind) < 0));
+  const group = k => /^(계약서|분양권 매매)/.test(k) ? '계약서류' : /^분양대금납부확인서/.test(k) ? '분양대금납부확인서' : k === OTHER_KIND ? '그 밖의 자료' : '추가로 요청드린 서류';
+  let lastG = '', html = '';
+  slots.forEach((s, i) => {
+    const g = group(s.kind), list = listOf(s);
+    if (g !== lastG) { html += `<h3 style="margin:22px 0 4px;font-size:17px;color:var(--brand)">${esc(g)}</h3>`; lastG = g; }
+    html += `<div style="border:2px solid ${s.st === '미제출' && !list.length ? '#f2b8b5' : 'var(--line)'};border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:17px">${esc(s.label)}</b>${slotBadge(s, list)}</div>
+      ${s.note ? '<p style="font-size:14px;margin:6px 0">' + esc(s.note) + '</p>' : ''}
+      ${s.st === '제출완료' && !list.length ? '<p style="font-size:14px;color:var(--sub);margin:6px 0">이미 받은 자료로 확인되었습니다. 다시 올리지 않으셔도 됩니다.</p>' : ''}
+      ${slotHelp(s.kind)}
+      ${list.length ? '<ul style="font-size:14px;margin:6px 0 6px 18px;padding:0">' + list.map(u => '<li>' + esc(u.name) + ' <span style="color:var(--sub)">(' + esc(u.by) + ', ' + esc(u.at) + ' · ' + esc(u.state) + ')</span>' + (u.memo ? '<br><span style="color:#b3261e">' + esc(u.memo) + '</span>' : '') + '</li>').join('') + '</ul>' : ''}
+      <input id="f${i}" type="file" accept="image/*,application/pdf" multiple style="width:100%;font-size:16px;margin-top:6px">
+      <p style="margin:8px 0 0"><button class="btn" id="u${i}" disabled>올리기</button></p>
+      <div id="m${i}"></div></div>`;
+  });
   app.innerHTML = `
     <button class="back" id="back">← 서류 목록</button>
     ${flash ? '<div class="msg ok">' + esc(flash) + '</div>' : ''}
     <div class="card">
       <h2>필수 서류 제출</h2>
-      <p style="margin:0"><b>필요 서류:</b> ${esc(dc.need || '분양대금납부확인서')}</p>
       ${dc.missing ? (dc.confirm === '완료' ? '<div class="msg ok">제출하신 서류를 비대위가 확인했습니다.</div>' : '<div class="msg bad"><b>아직 확인되지 않은 서류:</b> ' + esc(dc.missing) + (dc.confirm === '보완 필요' ? '<br>제출하신 서류에 보완이 필요합니다. 비대위 안내를 확인해 주세요.' : '') + '</div>') : '<div class="msg ok">필수 서류가 모두 확인되었습니다. 추가 자료가 있으면 아래에서 올려 주셔도 됩니다.</div>'}
-      <p style="font-size:14px;color:var(--sub)">공동명의 세대는 한 분만 제출하시면 됩니다. 계약서(공급계약서)는 모든 분이 앞면과 뒷면을 올려 주세요. 공동명의 세대와 분양권을 넘겨받은 분은 뒷면의 권리·의무 승계 내역이 꼭 보이게 찍어 주세요. 중개업소를 통해 분양권을 사신 분은 분양권 매매계약서(또는 실거래 신고필증)도 올려 주세요.</p>
-      ${certGuide}
-      <details class="msg" style="color:var(--ink)"><summary><b>계약서 사진 예시 보기</b> (어떤 면을 찍어야 하는지)</summary>
-        <p style="font-size:14px">종이 한 장의 네 모서리가 다 보이게, 글자가 흐리지 않게 찍어 주세요. 주민등록번호 뒷자리는 가려도 됩니다. 발코니확장·플러스옵션 계약서가 아닌 <b>공급계약서</b>를 올려 주세요.</p>
-        <p><b>① 공급계약서 앞면</b> → 종류 '계약서 앞면'<br><img src="sample/01_front.png" alt="공급계약서 앞면 예시" style="width:100%;border:1px solid var(--line);border-radius:8px"></p>
-        <p><b>② 공급계약서 뒷면</b> → 종류 '계약서 뒷면(권리·의무 승계 내역)'<br><img src="sample/02_back.png" alt="공급계약서 뒷면 예시" style="width:100%;border:1px solid var(--line);border-radius:8px"></p>
-        ${/매매/.test(dc.need || '') ? '<p><b>③ 분양권 매매계약서</b> → 종류 \'분양권 매매계약서·실거래 신고필증\'<br><img src="sample/03_deal.png" alt="분양권 매매계약서 예시" style="width:100%;border:1px solid var(--line);border-radius:8px"></p>' : ''}
-      </details>
-      <label for="kind">서류 종류</label>
-      <select id="kind" style="width:100%;font-size:17px;padding:12px;border:2px solid var(--line);border-radius:10px">${dc.kinds.map(k => '<option>' + esc(k) + '</option>').join('')}</select>
-      <label for="file">파일 선택 (사진 또는 PDF, 여러 개 가능)</label>
-      <input id="file" type="file" accept="image/*,application/pdf" multiple style="width:100%;font-size:16px">
-      <p style="margin-top:12px"><button class="btn" id="up" disabled>올리기</button></p>
-      <div id="upMsg"></div>
-    </div>
-    <div class="card"><h2>제출 내역(우리 세대)</h2>
-      ${ups.length ? '<div class="tw"><table class="grid small"><tr><td>제출일시</td><td>제출자</td><td>종류</td><td>파일</td><td>상태</td></tr>' + ups.map(u => '<tr><td>' + esc(u.at) + '</td><td>' + esc(u.by) + '</td><td>' + esc(u.kind) + '</td><td>' + esc(u.name) + '</td><td>' + esc(u.state) + (u.memo ? '<br>' + esc(u.memo) : '') + '</td></tr>').join('') + '</table></div>' : '<p>아직 이 화면으로 제출한 서류가 없습니다. (설문 때 올리신 서류는 이미 반영되어 있습니다.)</p>'}
+      <p style="font-size:14px;color:var(--sub);margin:8px 0 0">우리 세대에 필요한 서류만 칸으로 나와 있습니다. <b>'제출 필요'</b> 칸에 사진(여러 장 가능)이나 PDF를 골라 <b>[올리기]</b>를 누르세요. 공동명의 세대는 한 분만 올리시면 됩니다.</p>
+      ${html}
     </div>`;
   $('#back').onclick = () => showHome();
-  $('#file').onchange = e => $('#up').disabled = !e.target.files.length;
-  $('#up').onclick = async () => {
-    const files = [...$('#file').files], kind = $('#kind').value; if (!files.length) return;
-    $('#up').disabled = true; let okN = 0;
-    for (let i = 0; i < files.length; i++) {
-      $('#upMsg').innerHTML = '<div class="msg warn">올리는 중… (' + (i + 1) + '/' + files.length + ') ' + esc(files[i].name) + '</div>';
-      try {
-        const f = await prepFile(files[i]);
-        const r = await call({ action: 'upload', sid, kind, name: f.name, mime: f.mime, data: f.data }, $('#upMsg'));
-        if (!r) { $('#up').disabled = false; return; }
-        data = r.data; okN++;
-      } catch (e) { $('#upMsg').innerHTML = '<div class="msg bad">' + esc(files[i].name) + ': ' + esc(e.message) + '</div>'; $('#up').disabled = false; return; }
-    }
-    showUpload(okN + '개 파일을 올렸습니다. 비대위가 확인한 뒤 상태가 바뀝니다.');
-  };
+  slots.forEach((s, i) => {
+    $('#f' + i).onchange = e => $('#u' + i).disabled = !e.target.files.length;
+    $('#u' + i).onclick = async () => {
+      const files = [...$('#f' + i).files], box = $('#m' + i); if (!files.length) return;
+      $('#u' + i).disabled = true; let okN = 0;
+      for (let j = 0; j < files.length; j++) {
+        box.innerHTML = '<div class="msg warn">올리는 중… (' + (j + 1) + '/' + files.length + ') ' + esc(files[j].name) + '</div>';
+        try {
+          const f = await prepFile(files[j]);
+          const r = await call({ action: 'upload', sid, kind: s.kind, name: f.name, mime: f.mime, data: f.data }, box);
+          if (!r) { $('#u' + i).disabled = false; return; }
+          data = r.data; okN++;
+        } catch (e) { box.innerHTML = '<div class="msg bad">' + esc(files[j].name) + ': ' + esc(e.message) + '</div>'; $('#u' + i).disabled = false; return; }
+      }
+      showUpload(s.label + ' – ' + okN + '개 파일을 올렸습니다. 비대위가 확인한 뒤 상태가 바뀝니다.');
+    };
+  });
 }
 
 // 사진은 긴 변 2000px JPEG로 줄여서, PDF는 그대로(15MB 이하) 보냄
