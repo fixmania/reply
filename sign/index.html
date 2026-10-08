@@ -55,7 +55,8 @@
   table.grid tr:first-child td { background: var(--kv); font-weight: 700; }
   table.small { font-size: 13px; }
   .pad-wrap { border: 2px dashed #8aa0b8; border-radius: 12px; background: #fff; position: relative; touch-action: none; }
-  canvas { display: block; width: 100%; height: 190px; border-radius: 12px; }
+  canvas { display: block; width: 100%; height: 190px; border-radius: 12px; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  html.signing, html.signing body { overscroll-behavior: none; }
   .pad-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #9aa8b8; pointer-events: none; font-size: 18px; }
   .check { display: flex; gap: 10px; align-items: flex-start; font-weight: 700; margin: 14px 0; }
   .check input { width: 26px; height: 26px; flex: none; margin-top: 2px; }
@@ -451,12 +452,17 @@ async function reload() { const r = await api({ action: 'get', sid }); if (r.ok)
 // ── 서명 패드 ──
 function makePad(cv, onDraw) {
   const ctx = cv.getContext('2d'); let drawing = false, last = null, ink = 0;
-  const fit = () => { const r = cv.getBoundingClientRect(), dpr = Math.max(1, window.devicePixelRatio || 1); const img = ink ? cv.toDataURL() : null; cv.width = r.width * dpr; cv.height = r.height * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#111'; if (img) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, r.width, r.height); im.src = img; } };
+  let lastW = 0;
+  const fit = () => { const r = cv.getBoundingClientRect(); if (Math.round(r.width) === lastW) return; lastW = Math.round(r.width); const dpr = Math.max(1, window.devicePixelRatio || 1); const img = ink ? cv.toDataURL() : null; cv.width = r.width * dpr; cv.height = r.height * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#111'; if (img) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, r.width, r.height); im.src = img; } };
   fit(); window.addEventListener('resize', fit);
   const pos = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
-  cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.setPointerCapture(e.pointerId); drawing = true; last = pos(e); });
+  // 휴대폰에서 서명 중 화면이 스크롤되지 않게: 서명 칸의 터치 기본 동작(스크롤·확대·당겨서 새로고침)을 막음
+  const block = e => { if (e.cancelable) e.preventDefault(); };
+  ['touchstart', 'touchmove', 'touchend'].forEach(t => cv.addEventListener(t, block, { passive: false }));
+  const end = () => { drawing = false; document.documentElement.classList.remove('signing'); };
+  cv.addEventListener('pointerdown', e => { e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (x) {} drawing = true; last = pos(e); document.documentElement.classList.add('signing'); });
   cv.addEventListener('pointermove', e => { if (!drawing) return; e.preventDefault(); const p = pos(e); ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); ink += Math.hypot(p.x - last.x, p.y - last.y); last = p; onDraw(); });
-  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => cv.addEventListener(t, () => drawing = false));
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => cv.addEventListener(t, end));
   return {
     ink: () => ink,
     clear: () => { ctx.clearRect(0, 0, cv.width, cv.height); ink = 0; },
