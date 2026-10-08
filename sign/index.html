@@ -195,77 +195,56 @@ function showHome(flash) {
       ${data.docs ? `<p style="font-size:14px;color:var(--sub);margin:14px 0 8px">${data.complaint ? '③' : '②'} 필수 서류</p>
       <button class="item" data-k="docs"><span class="t">필수 서류 제출<span class="s">${esc(data.docs.need || '분양대금납부확인서')}</span></span>${docBadge(data.docs)}</button>` : ''}
       ${data.recordings && data.recordings.length ? `<p style="font-size:14px;color:var(--sub);margin:14px 0 8px">${data.complaint ? '④' : '③'} 녹취 확인</p>
-      <button class="item" data-k="recs"><span class="t">녹음 파일 확인<span class="s">제출하신 녹취 ${data.recordings.length}건 – 누가·언제·누구와 녹음했는지</span></span>${(() => { const n = data.recordings.filter(r => r.answer).length; return n === data.recordings.length ? '<span class="badge b-ok">확인 완료</span>' : '<span class="badge b-warn">' + n + '/' + data.recordings.length + ' 확인</span>'; })()}</button>` : ''}
+      <button class="item" data-k="recs"><span class="t">녹음 파일 확인<span class="s">제출하신 녹취 ${data.recordings.length}건 – 언제·누구와의 대화인지 확인</span></span>${(() => { const n = data.recordings.filter(r => r.answer).length; return n === data.recordings.length ? '<span class="badge b-ok">확인 완료</span>' : '<span class="badge b-warn">' + n + '/' + data.recordings.length + ' 확인</span>'; })()}</button>` : ''}
     </div>
     ${data.isRep ? '<div class="msg warn">고소인 대표님은 위임장 대신 고소장 원본에 자필로 서명합니다.</div>' : ''}
     <p style="font-size:13px;color:var(--sub)">문서 버전: ${esc(data.version)}</p>`;
   app.querySelectorAll('.item').forEach(b => b.onclick = () => { const k = b.dataset.k; k === 'complaint' ? showComplaint() : k === 'docs' ? showUpload() : k === 'recs' ? showRecs() : showDoc(Number(k)); });
 }
 
-// 대화 상대 질문: 추정 직원 1명 → 맞는지 확인 / 2명 이상 → 누구인지 선택 / 없음 → 직접 입력
-function staffQ(r, i, a, sel, inp) {
-  const st = r.staff || [], nm = s => s.name ? s.name + ' ' + s.title : s.title + '(성함 미상)';
-  const other = '<div id="rcBox' + i + '" class="hide"><label>실제 대화 상대(이름·직책·소속)</label>' + inp('rc' + i, a.counterpart, '예: 시행사 ○○○ 부장') + '</div>';
-  if (st.length === 1) {
-    const prev = a.staffCheck === '추정 일치' ? '예, 맞습니다' : a.staffCheck === '추정과 다름' ? '아니오, 다른 사람입니다' : a.staffCheck === '모름' ? '모르겠습니다' : '';
-    return '<label>이 녹음의 대화 상대가 <b>' + esc(nm(st[0])) + '</b>이(가) 맞습니까?</label>' + sel('rs' + i, ['예, 맞습니다', '아니오, 다른 사람입니다', '모르겠습니다'], prev) + other;
-  }
-  if (st.length > 1) {
-    const prev = /^선택: /.test(a.staffCheck || '') ? a.staffCheck.replace('선택: ', '') : a.staffCheck === '추정과 다름' ? '그 밖의 사람' : a.staffCheck === '모름' ? '모르겠습니다' : '';
-    return '<label>이 녹음은 다음 상담직원 중 <b>누구와 나눈 대화</b>입니까?</label>' + sel('rs' + i, [...st.map(nm), '그 밖의 사람', '모르겠습니다'], prev) + other;
-  }
-  return '<label>대화 상대(이름·직책·소속)' + (r.hint ? ' – 파일명상 ' + esc(r.hint) : '') + '</label>' + inp('rc' + i, a.counterpart, '예: 김규민 실장(분양사무소)');
-}
-function staffAnswer(r, v) {
-  const st = r.staff || [], nm = s => s.name ? s.name + ' ' + s.title : s.title + '(성함 미상)', s = v('rs'), typed = v('rc').trim();
-  if (!st.length) return { counterpart: typed, check: typed ? '직접 입력' : '' };
-  if (!s) return { error: '대화 상대 질문에 답해 주세요.' };
-  if (st.length === 1) {
-    if (s.startsWith('예')) return { counterpart: nm(st[0]), check: '추정 일치' };
-    if (s.startsWith('모르')) return { counterpart: '', check: '모름' };
-    if (!typed) return { error: '실제 대화 상대를 적어 주세요.' };
-    return { counterpart: typed, check: '추정과 다름' };
-  }
-  if (s === '모르겠습니다') return { counterpart: '', check: '모름' };
-  if (s === '그 밖의 사람') { if (!typed) return { error: '실제 대화 상대를 적어 주세요.' }; return { counterpart: typed, check: '추정과 다름' }; }
-  return { counterpart: s, check: '선택: ' + s };
-}
-
-// ── 3-d) 녹취 확인(녹음자·일시·대화 상대) ──
+// ── 3-d) 녹취 확인: 비대위가 파악한 언제·누가·내용이 맞는지 확인 / 빠졌거나 다르면 대략적 일자·대화 상대 / 녹음 방식 ──
 function showRecs(flash) {
   window.scrollTo(0, 0);
   const sel = (id, opts, v) => '<select id="' + id + '" style="width:100%;font-size:17px;padding:10px;border:2px solid var(--line);border-radius:10px"><option value="">선택</option>' + opts.map(o => '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select>';
   const inp = (id, v, ph) => '<input id="' + id + '" type="text" value="' + esc(v || '') + '" placeholder="' + esc(ph || '') + '" style="width:100%;font-size:17px;padding:10px;border:2px solid var(--line);border-radius:10px">';
+  const unk = '<span style="color:var(--bad)">확인 필요</span>';
+  const OK = '예, 맞습니다', NO = '아니오, 다릅니다', REC_BY = '본인 또는 가족이 대화하며 직접 녹음함';
   app.innerHTML = `
     <button class="back" id="back">← 서류 목록</button>
     ${flash ? '<div class="msg ok">' + esc(flash) + '</div>' : ''}
     <div class="card"><h2>녹취 확인</h2>
-      <p>제출하신 녹음 파일을 수사기관에 증거로 내려면 <b>누가, 언제, 누구와</b> 녹음했는지 확인이 필요합니다. 대화에 참여한 사람이 직접 녹음한 것이어야 증거로 쓸 수 있습니다. 공동명의 세대는 한 분만 입력하셔도 됩니다.</p></div>
-    ${data.recordings.map((r, i) => { const a = r.answer || {}; return `
+      <p>제출하신 녹음 파일마다 비대위가 파악한 <b>언제, 누구와, 어떤 내용</b>인지와 <b>녹음한 사람</b>을 적어 두었습니다. 맞는지만 확인해 주세요. 녹음을 다시 들으실 필요는 없습니다. 공동명의 세대는 한 분만 확인하셔도 됩니다.</p></div>
+    ${data.recordings.map((r, i) => { const a = r.answer || {}, complete = !!(r.when && r.who); return `
     <div class="card">
       <h2 style="font-size:17px">${i + 1}. ${esc(r.label)}</h2>
-      <p style="font-size:14px;color:var(--sub);margin:0">파일: ${esc(r.file)}${r.duration ? ' · 길이 ' + esc(r.duration) : ''}</p>
-      ${r.answer ? '<div class="msg ok">입력됨 (' + esc(a.at) + ', ' + esc(a.by) + ') – 고칠 내용이 있으면 다시 저장하세요.</div>' : ''}
-      <label>녹음한 사람</label>${sel('rr' + i, ['본인', '같은 세대 가족(공동명의자 포함)', '그 밖의 사람'], a.recorder)}
-      <label>녹음한 사람 성명(본인이 아닌 경우)</label>${inp('rn' + i, a.recorderName, '예: 홍길동(배우자)')}
-      <label>녹음 날짜(대략이라도)</label>${inp('rd' + i, a.date || r.dateGuess, '예: 2024-08-19 또는 2024년 8월')}
-      ${staffQ(r, i, a, sel, inp)}
+      <p style="font-size:14px;color:var(--sub);margin:0 0 8px">파일: ${esc(r.file)}${r.duration ? ' · 길이 ' + esc(r.duration) : ''}</p>
+      ${r.answer ? '<div class="msg ok">확인됨 (' + esc(a.at) + ', ' + esc(a.by) + ') – 고칠 내용이 있으면 다시 저장하세요.</div>' : ''}
+      <table class="grid small"><tr><td style="width:28%">언제</td><td>${r.when ? esc(r.when) : unk}</td></tr>
+        <tr><td>대화 상대</td><td>${r.who ? esc(r.who) : unk}</td></tr>
+        <tr><td>내용</td><td>${esc(r.what || '')}</td></tr>
+        <tr><td>녹음</td><td>${REC_BY}</td></tr></table>
+      <label>위에 적힌 내용이 맞습니까?</label>${sel('rk' + i, [OK, NO], /^맞음/.test(a.check || '') ? OK : /^다름/.test(a.check || '') ? NO : '')}
+      <div id="wwBox${i}" class="${complete && !/^다름/.test(a.check || '') ? 'hide' : ''}">
+        <label>${complete ? '다른 부분을 적어 주세요 (대략 언제, 누구와, 누가 녹음했는지)' : '대략 언제, 누구와의 대화였나요? (위 내용 중 다른 부분이 있으면 함께 적어 주세요)'}</label>
+        ${inp('ww' + i, a.whenWho, '예: 26년 2월경, 모델하우스 상담직원')}
+        ${r.hint ? '<p style="font-size:14px;color:var(--sub);margin:4px 0 0">참고: ' + esc(r.hint) + '</p>' : ''}
+      </div>
       <label>녹음 방식</label>${sel('rm' + i, ['대면', '전화', '모름'], a.mode)}
-      <label>녹음한 사람이 그 대화에 직접 참여했나요?</label>${sel('rp' + i, ['예', '아니오', '모름'], a.participated)}
-      <label>메모(선택)</label>${inp('ro' + i, a.memo, '예: 계약 전 상담 때 휴대폰으로 녹음')}
       <p style="margin-top:12px"><button class="btn" data-r="${i}">저장</button></p><div id="rmsg${i}"></div>
     </div>`; }).join('')}`;
   $('#back').onclick = () => showHome();
-  // 추정 직원 질문: '아니오/그 밖의 사람'을 고르면 직접 입력란 표시
-  data.recordings.forEach((r, i) => { const s = $('#rs' + i), box = $('#rcBox' + i); if (s && box) { const f = () => box.classList.toggle('hide', !/아니오|그 밖의 사람/.test(s.value)); s.onchange = f; f(); } });
+  // '아니오, 다릅니다'를 고르면 언제·누구와 입력란 표시
+  data.recordings.forEach((r, i) => { const s = $('#rk' + i), box = $('#wwBox' + i); if (s && box && r.when && r.who) s.onchange = () => box.classList.toggle('hide', s.value !== NO); });
   app.querySelectorAll('button[data-r]').forEach(b => b.onclick = async () => {
     const i = Number(b.dataset.r), r = data.recordings[i], v = id => { const e = $('#' + id + i); return e ? e.value : ''; };
-    if (!v('rr') || !v('rp')) { $('#rmsg' + i).innerHTML = '<div class="msg bad">녹음한 사람과 대화 참여 여부를 선택해 주세요.</div>'; return; }
-    const st = staffAnswer(r, v);
-    if (st.error) { $('#rmsg' + i).innerHTML = '<div class="msg bad">' + esc(st.error) + '</div>'; return; }
+    const complete = !!(r.when && r.who), k = v('rk'), check = k === OK ? '맞음' : k === NO ? '다름' : '';
+    const say = m => $('#rmsg' + i).innerHTML = '<div class="msg bad">' + esc(m) + '</div>';
+    if (!check) return say('위에 적힌 내용이 맞는지 골라 주세요.');
+    if ((!complete || check === '다름') && !v('ww').trim()) return say('대략적인 일자와 대화 상대를 적어 주세요.');
+    if (!v('rm')) return say('녹음 방식을 골라 주세요.');
     b.disabled = true; b.textContent = '저장 중…';
-    const res = await call({ action: 'recinfo', sid, recId: r.id, recorder: v('rr'), recorderName: v('rn'), date: v('rd'), counterpart: st.counterpart, staffCheck: st.check, mode: v('rm'), participated: v('rp'), memo: v('ro') }, $('#rmsg' + i));
-    if (res) { data = res.data; showRecs((i + 1) + '번 녹취 정보를 저장했습니다.'); } else { b.disabled = false; b.textContent = '저장'; }
+    const res = await call({ action: 'recinfo', sid, recId: r.id, check, whenWho: v('ww'), mode: v('rm') }, $('#rmsg' + i));
+    if (res) { data = res.data; showRecs((i + 1) + '번 녹취를 확인했습니다.'); } else { b.disabled = false; b.textContent = '저장'; }
   });
 }
 
@@ -279,16 +258,18 @@ function docBadge(dc) {
 // ── 3-c) 필수 서류 제출: 세대별 필요 서류마다 업로드 칸 (계약서류 → 분양대금납부확인서 → 추가 서류 → 기타) ──
 const OTHER_KIND = '기타 자료';
 const SLOT_DEFAULT = [
-  { kind: '계약서 앞면', label: '공급계약서 앞면', st: '', req: true },
-  { kind: '계약서 뒷면(권리·의무 승계 내역)', label: '공급계약서 뒷면', st: '', req: true },
+  { kind: '계약서 앞면', label: '분양계약서 앞면', st: '', req: true },
   { kind: '분양대금납부확인서(분양)', label: '분양대금납부확인서(분양)', st: '', req: true }];
 const imgTag = (src, alt) => `<img src="${src}" alt="${alt}" style="width:100%;border:1px solid var(--line);border-radius:8px;margin-top:6px">`;
 function slotHelp(kind) {
   if (kind === '계약서 앞면') return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>사진 예시 보기</b></summary>
-    <p style="font-size:14px;margin:6px 0">'공급계약서 전문'이라고 적힌 계약서입니다(발코니확장·플러스옵션 계약서가 아님). 종이 한 장의 네 모서리가 다 보이게 찍어 주세요. 주민등록번호 뒷자리는 가려도 됩니다.</p>${imgTag('sample/01_front.png', '공급계약서 앞면 예시')}</details>`;
+    <p style="font-size:14px;margin:6px 0">종이 한 장의 네 모서리가 다 보이게 찍어 주세요. 주민등록번호 뒷자리는 가려도 됩니다.</p>${imgTag('sample/01_front.png', '분양계약서 앞면 예시')}</details>`;
   if (kind === '계약서 뒷면(권리·의무 승계 내역)') return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>사진 예시 보기</b></summary>
-    <p style="font-size:14px;margin:6px 0">아래쪽 '권리의무 승계내역' 표까지 한 화면에 나오게 찍어 주세요. 표가 비어 있어도 그대로 올려 주세요.</p>${imgTag('sample/02_back.png', '공급계약서 뒷면 예시')}</details>`;
-  if (kind === '분양권 매매계약서·실거래 신고필증') return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>사진 예시 보기</b></summary>${imgTag('sample/03_deal.png', '분양권 매매계약서 예시')}</details>`;
+    <p style="font-size:14px;margin:6px 0">아래쪽 '권리의무 승계내역' 표까지 한 화면에 나오게 찍어 주세요. 표가 비어 있어도 그대로 올려 주세요.</p>${imgTag('sample/02_back.png', '분양계약서 뒷면 예시')}</details>`;
+  if (kind === '매매계약서') return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>사진 예시 보기 (2가지)</b></summary>
+    <p style="font-size:14px;margin:8px 0 0"><b>③ 분양권 매매계약서</b> – 분양권을 넘겨받으며 쓴 계약서</p>${imgTag('sample/03_deal.png', '분양권 매매계약서 예시')}
+    <p style="font-size:14px;margin:12px 0 0"><b>④ 중개업소 매매계약서</b> – 부동산 중개업소에서 쓴 계약서(아래쪽에 중개사 상호·도장)</p>${imgTag('sample/04_broker.png', '중개업소 매매계약서 예시')}
+    <p style="font-size:14px;margin:8px 0 0">둘 중 가지고 계신 것을 올리시면 됩니다. 둘 다 있으면 모두 올려 주세요.</p></details>`;
   if (kind === '분양대금납부확인서(분양)') return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>발급 방법 보기</b></summary><p style="font-size:14px;margin:6px 0">
     ① 푸르지오 홈페이지(<a href="https://www.prugio.com" target="_blank" rel="noopener">prugio.com</a>)에 로그인<br>
     ② <b>마이 푸르지오</b> → <b>민원서류 신청</b> → <b>분양대금납부확인서</b><br>
@@ -315,7 +296,7 @@ function showUpload(flash) {
     .concat([{ kind: OTHER_KIND, label: '그 밖의 자료(선택)', st: '', req: false, note: '위 칸에 해당하지 않는 자료가 있으면 여기에 올려 주세요.' }]);
   const known = slots.map(s => s.kind);
   const listOf = s => ups.filter(u => u.kind === s.kind || (s.kind === OTHER_KIND && known.indexOf(u.kind) < 0));
-  const group = k => /^(계약서|분양권 매매)/.test(k) ? '계약서류' : /^분양대금납부확인서/.test(k) ? '분양대금납부확인서' : k === OTHER_KIND ? '그 밖의 자료' : '추가로 요청드린 서류';
+  const group = k => /^(계약서|매매계약서)/.test(k) ? '계약서류' : /^분양대금납부확인서/.test(k) ? '분양대금납부확인서' : k === OTHER_KIND ? '그 밖의 자료' : '추가로 요청드린 서류';
   let lastG = '', html = '';
   slots.forEach((s, i) => {
     const g = group(s.kind), list = listOf(s);
