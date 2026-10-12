@@ -266,7 +266,7 @@ const SLOT_DEFAULT = [
   { kind: '분양대금납부확인서(분양)', label: '분양대금납부확인서(분양)', st: '', req: true }];
 const imgTag = (src, alt) => `<img src="${src}" alt="${alt}" style="width:100%;border:1px solid var(--line);border-radius:8px;margin-top:6px">`;
 function slotHelp(kind) {
-  if (kind === ID_KIND) return '<p style="font-size:14px;margin:6px 0"><b>주민등록증·운전면허증·여권</b> 중 하나의 <b>앞면</b>을 찍어 주세요. <b>주민등록번호 뒷자리는 종이 등으로 가리고</b> 찍으면 됩니다. 고소장 제출 때 본인 확인 자료로만 쓰며, 공동명의자도 <b>각자</b> 올려 주세요.</p>';
+  if (kind === ID_KIND) return '<p style="font-size:14px;margin:6px 0"><b>주민등록증·운전면허증·여권</b> 중 하나의 <b>앞면</b>을 찍어 주세요. <b>주민등록번호 뒷자리는 종이 등으로 가리고</b> 찍으면 됩니다. ' + ((data.items || []).some(i => i.type === '위임장') ? '<b>위임장의 첨부서류</b>로 위임장 바로 뒤에 붙어 고소장과 함께 제출됩니다.' : '본인 확인 자료로 고소장과 함께 제출됩니다.') + ' 공동명의자도 <b>각자</b> 올려 주세요.</p>';
   if (kind === '계약서 앞면') return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>사진 예시 보기</b></summary>
     <p style="font-size:14px;margin:6px 0">종이 한 장의 네 모서리가 다 보이게 찍어 주세요. 주민등록번호 뒷자리는 가려도 됩니다.</p>${imgTag('sample/01_front.png', '분양계약서 앞면 예시')}</details>`;
   if (kind === '계약서 뒷면(권리·의무 승계 내역)') return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>사진 예시 보기</b></summary>
