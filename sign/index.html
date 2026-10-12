@@ -88,7 +88,7 @@
 <body>
 <header><h1>달서 푸르지오 시그니처 형사고소 서류 서명</h1><p id="hdrSub">고소인 본인 전용 화면</p></header>
 <main id="app"><div class="spinner">불러오는 중…</div></main>
-<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a><br><span style="font-size:11px">화면 버전 2026-10-12k</span></footer>
+<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a><br><span style="font-size:11px">화면 버전 2026-10-13a</span></footer>
 
 <script>
 // ▼ Apps Script 웹 앱 주소(배포 후 받은 /exec 주소)로 바꾸세요.
@@ -333,8 +333,8 @@ function showUpload(flash) {
   window.scrollTo(0, 0);
   const dc = data.docs, ups = dc.uploads || [];
   const slots = (dc.slots && dc.slots.length ? dc.slots : SLOT_DEFAULT).filter(s => s.kind !== OTHER_KIND)
-    .filter(s => s.kind !== ID_KIND).concat([{ kind: ID_KIND, label: '신분증 사본(' + data.name + '님 본인)', st: '미제출', req: true, note: '' }])
-    .concat([{ kind: OTHER_KIND, label: '그 밖의 자료(선택)', st: '', req: false, note: '위 칸에 해당하지 않는 자료가 있으면 여기에 올려 주세요.' }]);
+    .filter(s => s.kind !== ID_KIND).concat([{ kind: ID_KIND, label: '신분증 사본(' + data.name + '님 본인)', st: '미제출', req: true, note: '' }]);
+  // '그 밖의 자료' 칸은 두지 않음: 증거자료는 이미 받은 것으로 고소하고, 추가 자료는 고소장 접수 뒤 따로 받음
   const known = slots.map(s => s.kind);
   const listOf = s => s.kind === ID_KIND ? myId() : ups.filter(u => u.kind === s.kind || (s.kind === OTHER_KIND && known.indexOf(u.kind) < 0));
   const group = k => /^(계약서|매매계약서|증여계약서)/.test(k) ? '계약서류' : /^분양대금납부확인서/.test(k) ? '분양대금납부확인서' : k === OTHER_KIND ? '그 밖의 자료' : k === ID_KIND ? '본인 신분증' : '추가로 요청드린 서류';
