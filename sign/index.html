@@ -57,7 +57,25 @@
   .pad-wrap { border: 2px dashed #8aa0b8; border-radius: 12px; background: #fff; position: relative; touch-action: none; }
   canvas { display: block; width: 100%; height: 190px; border-radius: 12px; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
   html.signing, html.signing body { overscroll-behavior: none; }
-  .pad-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #9aa8b8; pointer-events: none; font-size: 18px; }
+  /* 전체 화면 서명 창 · 촬영 가이드 */
+  html.lock, html.lock body { overflow: hidden; overscroll-behavior: none; height: 100%; }
+  .sigov { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; flex-direction: column; padding: 12px; touch-action: none; }
+  .sigov .area { flex: 1; position: relative; border: 2px dashed #8aa0b8; border-radius: 12px; background: #fff; margin: 8px 0; }
+  .sigov .area canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .sigov .row button { flex: 1; }
+  .camov { position: fixed; inset: 0; z-index: 10000; background: #000; touch-action: none; }
+  .camov video, .camov img.res { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .camov img.res { object-fit: contain; background: #000; }
+  .camframe { position: absolute; box-shadow: 0 0 0 200vmax rgba(0,0,0,.55); border-radius: 6px; }
+  .camframe i { position: absolute; width: 34px; height: 34px; border: 0 solid #fff; }
+  .camframe .tl { left: -3px; top: -3px; border-left-width: 5px; border-top-width: 5px; }
+  .camframe .tr { right: -3px; top: -3px; border-right-width: 5px; border-top-width: 5px; }
+  .camframe .bl { left: -3px; bottom: -3px; border-left-width: 5px; border-bottom-width: 5px; }
+  .camframe .br { right: -3px; bottom: -3px; border-right-width: 5px; border-bottom-width: 5px; }
+  .camtip { position: absolute; left: 0; right: 0; top: 14px; text-align: center; color: #fff; font-size: 17px; line-height: 1.5; text-shadow: 0 1px 3px #000; padding: 0 12px; }
+  .cambar { position: absolute; left: 0; right: 0; bottom: 18px; display: flex; justify-content: space-around; align-items: center; padding: 0 12px; }
+  .cambar button { background: rgba(255,255,255,.18); color: #fff; font-size: 16px; padding: 12px 14px; min-width: 96px; }
+  .cambar .shot { width: 74px; height: 74px; min-width: 0; border-radius: 50%; background: #fff; border: 5px solid rgba(255,255,255,.5); background-clip: padding-box; }  .pad-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #9aa8b8; pointer-events: none; font-size: 18px; }
   .check { display: flex; gap: 10px; align-items: flex-start; font-weight: 700; margin: 14px 0; }
   .check input { width: 26px; height: 26px; flex: none; margin-top: 2px; }
   .back { background: none; color: var(--brand); padding: 6px 0; font-weight: 700; }
@@ -70,7 +88,7 @@
 <body>
 <header><h1>달서 푸르지오 시그니처 형사고소 서류 서명</h1><p id="hdrSub">고소인 본인 전용 화면</p></header>
 <main id="app"><div class="spinner">불러오는 중…</div></main>
-<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a></footer>
+<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a><br><span style="font-size:11px">화면 버전 2026-10-12c</span></footer>
 
 <script>
 // ▼ Apps Script 웹 앱 주소(배포 후 받은 /exec 주소)로 바꾸세요.
@@ -310,9 +328,7 @@ function showUpload(flash) {
     const redo = list.some(u => u.state === '보완 필요');
     const done = !redo && ((s.st === '제출완료' && !list.length) || (list.length > 0 && list.every(u => /확인/.test(u.state) && !/미확인/.test(u.state))));
     const upBox = `${slotHelp(s.kind)}
-      <p style="margin:8px 0 4px"><button class="btn" id="cb${i}" style="background:#fff;color:var(--brand);border:2px solid var(--brand)">카메라로 찍어 올리기</button></p>
-      <input id="c${i}" type="file" accept="image/*" capture="environment" style="display:none">
-      <p style="font-size:14px;color:var(--sub);margin:8px 0 2px">또는 휴대폰에 있는 사진·PDF 고르기(여러 개 가능)</p>
+      ${camOK() ? '<p style="margin:8px 0 4px"><button class="btn" id="cb' + i + '" style="background:#fff;color:var(--brand);border:2px solid var(--brand)">카메라로 찍어 올리기</button></p><p style="font-size:14px;color:var(--sub);margin:8px 0 2px">또는 휴대폰에 있는 사진·PDF 고르기(여러 개 가능)</p>' : '<p style="font-size:14px;color:var(--sub);margin:8px 0 2px">사진·PDF를 고르세요(여러 개 가능). 휴대폰에 따라 여기서 카메라로 찍을 수도 있습니다.</p>'}
       <input id="f${i}" type="file" accept="image/*,application/pdf" multiple style="width:100%;font-size:16px">
       <p style="margin:8px 0 0"><button class="btn" id="u${i}" disabled>올리기</button></p>`;
     html += `<div style="border:2px solid ${s.st === '미제출' && !list.length ? '#f2b8b5' : 'var(--line)'};border-radius:12px;padding:12px 14px;margin:10px 0;background:${done ? '#f7faf8' : '#fff'}">
@@ -335,8 +351,9 @@ function showUpload(flash) {
   $('#back').onclick = () => showHome();
   slots.forEach((s, i) => {
     $('#f' + i).onchange = e => $('#u' + i).disabled = !e.target.files.length;
-    $('#cb' + i).onclick = () => $('#c' + i).click();
-    $('#c' + i).onchange = e => { if (e.target.files.length) up([...e.target.files]); };
+    if ($('#cb' + i)) $('#cb' + i).onclick = () => openCamera(s.kind, file => up([file]),
+      () => showUpload('이 브라우저에서는 카메라를 열 수 없어 촬영 버튼을 숨겼습니다. [파일 선택]으로 사진을 고르거나, 크롬·사파리에서 다시 열어 주세요.'),
+      () => $('#f' + i).click());
     $('#u' + i).onclick = () => up([...$('#f' + i).files]);
     const up = async files => {
       const box = $('#m' + i); if (!files.length) return;
@@ -415,9 +432,9 @@ function showDoc(i) {
         <p><button class="btn" id="goUp">필수 서류 제출하러 가기</button></p>` : `
         <h2>전자서명</h2>
         <label class="check"><input type="checkbox" id="chk"> 위 내용을 끝까지 읽었고, 사실과 다름이 없음을 확인합니다.</label>
-        <p style="margin:6px 0">아래 칸에 손가락(또는 마우스)으로 <b>성명</b>을 써 주세요.</p>
-        <div class="pad-wrap"><canvas id="pad"></canvas><div class="pad-hint" id="hint">여기에 서명</div></div>
-        <div class="row" style="margin-top:10px"><button class="btn-sub" id="clear">지우기</button><button class="btn" id="sign" disabled>서명 제출</button></div>
+        <p style="margin:6px 0">아래 칸을 누르면 <b>서명 창</b>이 열립니다. 손가락으로 <b>성명</b>을 써 주세요.</p>
+        <div class="pad-wrap" id="sigBox" style="height:150px;display:flex;align-items:center;justify-content:center;cursor:pointer"><span id="sigHint" style="color:#7a8ca3;font-size:18px">✍ 여기를 눌러 서명하기</span><img id="sigImg" class="hide" alt="서명" style="max-width:96%;max-height:140px"></div>
+        <div class="row" style="margin-top:10px"><button class="btn-sub" id="clear">다시 서명</button><button class="btn" id="sign" disabled>서명 제출</button></div>
         <div id="err"></div>`}
       ${canReq ? `<p style="margin-top:14px"><button class="btn btn-sub" id="reqBtn" style="width:100%">내용이 사실과 달라요 (수정 요청)</button></p>
         <div id="reqBox" class="hide"><label for="reqText">고칠 내용을 적어 주세요</label><textarea id="reqText" maxlength="2000" placeholder="예) 상담 직원 이름은 ○○○ 실장입니다."></textarea>
@@ -437,13 +454,15 @@ function showDoc(i) {
   }
   if (done) return;
   if (it.locked) { $('#goUp').onclick = () => showUpload(); return; }
-  const pad = makePad($('#pad'), () => { $('#hint').classList.add('hide'); update(); });
-  const update = () => $('#sign').disabled = !($('#chk').checked && pad.ink() > 60);
+  let sig = '';   // 서명 창에서 받은 서명 이미지(PNG)
+  const update = () => $('#sign').disabled = !($('#chk').checked && sig);
+  const setSig = png => { sig = png || ''; $('#sigImg').src = sig; $('#sigImg').classList.toggle('hide', !sig); $('#sigHint').classList.toggle('hide', !!sig); update(); };
   $('#chk').onchange = update;
-  $('#clear').onclick = () => { pad.clear(); $('#hint').classList.remove('hide'); update(); };
+  $('#sigBox').onclick = () => openSignPad(png => setSig(png));
+  $('#clear').onclick = () => { setSig(''); openSignPad(png => setSig(png)); };
   $('#sign').onclick = async () => {
     $('#sign').disabled = true; $('#sign').textContent = '저장 중…';
-    const r = await call({ action: 'sign', sid, type: it.type, hash: it.hash, sig: pad.png(), ua: navigator.userAgent }, $('#err'));
+    const r = await call({ action: 'sign', sid, type: it.type, hash: it.hash, sig, ua: navigator.userAgent }, $('#err'));
     if (r) { data = r.data; showHome(it.title + ' 서명이 저장되었습니다.'); } else { $('#sign').textContent = '서명 제출'; update(); }
   };
 }
@@ -473,15 +492,82 @@ function makePad(cv, onDraw) {
   ['touchstart', 'touchmove', 'touchend'].forEach(t => cv.addEventListener(t, block, { passive: false }));
   const end = () => { drawing = false; document.documentElement.classList.remove('signing'); };
   cv.addEventListener('pointerdown', e => { e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (x) {} drawing = true; last = pos(e); document.documentElement.classList.add('signing'); });
-  cv.addEventListener('pointermove', e => { if (!drawing) return; e.preventDefault(); const p = pos(e); ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); ink += Math.hypot(p.x - last.x, p.y - last.y); last = p; onDraw(); });
+  let bx0 = 1e9, by0 = 1e9, bx1 = -1, by1 = -1;   // 서명한 부분의 범위(저장할 때 이 부분만 잘라 냄)
+  const grow = p => { bx0 = Math.min(bx0, p.x); by0 = Math.min(by0, p.y); bx1 = Math.max(bx1, p.x); by1 = Math.max(by1, p.y); };
+  cv.addEventListener('pointermove', e => { if (!drawing) return; e.preventDefault(); const p = pos(e); ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); ink += Math.hypot(p.x - last.x, p.y - last.y); grow(last); grow(p); last = p; onDraw(); });
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => cv.addEventListener(t, end));
   return {
     ink: () => ink,
-    clear: () => { ctx.clearRect(0, 0, cv.width, cv.height); ink = 0; },
-    png: () => { const out = document.createElement('canvas'); out.width = 600; out.height = Math.round(600 * cv.height / cv.width); const o = out.getContext('2d'); o.fillStyle = '#fff'; o.fillRect(0, 0, out.width, out.height); o.drawImage(cv, 0, 0, out.width, out.height); return out.toDataURL('image/png'); }
+    clear: () => { ctx.clearRect(0, 0, cv.width, cv.height); ink = 0; bx0 = by0 = 1e9; bx1 = by1 = -1; },
+    png: () => {   // 서명한 부분만(여백 조금 포함) 잘라 가로 600px 이하로 저장
+      const dpr = cv.width / cv.getBoundingClientRect().width, m = 12;
+      let x = Math.max(0, bx0 - m), y = Math.max(0, by0 - m), w = Math.min(cv.width / dpr, bx1 + m) - x, h = Math.min(cv.height / dpr, by1 + m) - y;
+      if (!(w > 0 && h > 0)) { x = 0; y = 0; w = cv.width / dpr; h = cv.height / dpr; }
+      const k = Math.min(600 / w, 300 / h, 4), out = document.createElement('canvas'); out.width = Math.max(200, Math.round(w * k)); out.height = Math.max(80, Math.round(h * k));
+      const o = out.getContext('2d'); o.fillStyle = '#fff'; o.fillRect(0, 0, out.width, out.height); o.drawImage(cv, x * dpr, y * dpr, w * dpr, h * dpr, (out.width - w * k) / 2, (out.height - h * k) / 2, w * k, h * k);
+      return out.toDataURL('image/png'); }
   };
 }
 
+// ── 전체 화면 서명 창: 뒤 화면을 고정해 서명 중 화면이 밀리지 않게 함 ──
+function openSignPad(onDone) {
+  const ov = document.createElement('div'); ov.className = 'sigov';
+  ov.innerHTML = `<b style="font-size:19px">성명을 써 주세요</b><span style="font-size:14px;color:var(--sub)">휴대폰을 가로로 돌리면 더 크게 쓸 수 있습니다.</span>
+    <div class="area"><canvas></canvas></div>
+    <div class="row"><button class="btn-sub" id="spClear">지우기</button><button class="btn-sub" id="spCancel">취소</button><button class="btn" id="spOk" disabled>완료</button></div>`;
+  document.body.appendChild(ov); document.documentElement.classList.add('lock');
+  const stop = e => { if (e.cancelable) e.preventDefault(); };
+  ov.addEventListener('touchmove', stop, { passive: false });
+  const pad = makePad(ov.querySelector('canvas'), () => ov.querySelector('#spOk').disabled = pad.ink() <= 60);
+  const close = () => { ov.remove(); document.documentElement.classList.remove('lock'); };
+  ov.querySelector('#spClear').onclick = () => { pad.clear(); ov.querySelector('#spOk').disabled = true; };
+  ov.querySelector('#spCancel').onclick = close;
+  ov.querySelector('#spOk').onclick = () => { const png = pad.png(); close(); onDone(png); };
+}
+
+// ── 촬영 가이드: 테두리 안에 서류를 맞춰 찍으면 테두리 안쪽만 잘라 저장 ──
+// 카메라를 열 수 없는 브라우저는 촬영 버튼을 숨김(지원 안 함: 처음부터 / 열기 실패: 그 뒤로)
+let camFail = false;
+const camOK = () => !camFail && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && window.isSecureContext !== false;
+async function openCamera(kind, onFile, onFail, onPick) {
+  if (!camOK()) { camFail = true; onFail(); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 3840 }, height: { ideal: 2160 } }, audio: false }); }
+  catch (e) { camFail = true; onFail(); return; }
+  const isId = kind === ID_KIND, ratio = isId ? 85.6 / 54 : 210 / 297;   // 가로/세로: 신분증 카드, 서류 A4
+  const ov = document.createElement('div'); ov.className = 'camov';
+  ov.innerHTML = `<video playsinline muted autoplay></video><div class="camframe"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i></div>
+    <p class="camtip">${isId ? '신분증 <b>앞면</b>을' : '서류 <b>한 장</b>을'} 흰 테두리에 맞춰 주세요${isId ? '<br><small>주민등록번호 뒷자리는 가리고 찍어 주세요</small>' : '<br><small>밝은 곳에서, 네 모서리가 테두리 안에 들어오게</small>'}</p>
+    <div class="cambar"><button id="camX">취소</button><button id="camShot" class="shot" aria-label="촬영"></button><button id="camFile">사진 고르기</button></div>`;
+  document.body.appendChild(ov); document.documentElement.classList.add('lock');
+  const video = ov.querySelector('video'), frame = ov.querySelector('.camframe'); video.srcObject = stream;
+  try { await video.play(); } catch (e) {}
+  const place = () => {   // 화면 안에서 가이드 테두리 크기·위치 계산
+    const W = innerWidth, H = innerHeight, top = 90, bottom = 120, aw = W * 0.9, ah = (H - top - bottom) * 0.96;
+    let w = aw, h = w / ratio; if (h > ah) { h = ah; w = h * ratio; }
+    Object.assign(frame.style, { left: (W - w) / 2 + 'px', top: top + (H - top - bottom - h) / 2 + 'px', width: w + 'px', height: h + 'px' });
+  };
+  place(); addEventListener('resize', place);
+  const close = () => { stream.getTracks().forEach(tr => tr.stop()); removeEventListener('resize', place); ov.remove(); document.documentElement.classList.remove('lock'); };
+  ov.querySelector('#camX').onclick = close;
+  ov.querySelector('#camFile').onclick = () => { close(); onPick(); };
+  ov.querySelector('#camShot').onclick = () => {
+    const VW = video.videoWidth, VH = video.videoHeight; if (!VW) return;
+    const vr = video.getBoundingClientRect(), fr = frame.getBoundingClientRect();
+    const sc = Math.max(vr.width / VW, vr.height / VH), ox = (vr.width - VW * sc) / 2, oy = (vr.height - VH * sc) / 2;   // object-fit: cover 보정
+    let sx = (fr.left - vr.left - ox) / sc, sy = (fr.top - vr.top - oy) / sc, sw = fr.width / sc, sh = fr.height / sc;
+    sx = Math.max(0, sx); sy = Math.max(0, sy); sw = Math.min(sw, VW - sx); sh = Math.min(sh, VH - sy);
+    const k = Math.min(1, 2400 / Math.max(sw, sh)), c = document.createElement('canvas'); c.width = Math.round(sw * k); c.height = Math.round(sh * k);
+    c.getContext('2d').drawImage(video, sx, sy, sw, sh, 0, 0, c.width, c.height);
+    c.toBlob(blob => {   // 미리보기: 다시 찍기 / 이 사진 올리기
+      const url = URL.createObjectURL(blob);
+      ov.innerHTML = `<img class="res" src="${url}" alt="촬영 결과"><p class="camtip">잘린 사진을 확인해 주세요. 글자가 잘 보이나요?</p>
+        <div class="cambar"><button id="camRe">다시 찍기</button><button id="camUse" style="background:#1e7a46;min-width:140px">이 사진 올리기</button></div>`;
+      ov.querySelector('#camRe').onclick = () => { URL.revokeObjectURL(url); close(); openCamera(kind, onFile, onFail, onPick); };
+      ov.querySelector('#camUse').onclick = () => { URL.revokeObjectURL(url); close(); onFile(new File([blob], '촬영_' + Date.now() + '.jpg', { type: 'image/jpeg' })); };
+    }, 'image/jpeg', 0.92);
+  };
+}
 // ── 시작 ──
 (async () => {
   sid = store.get('sid_' + token);
