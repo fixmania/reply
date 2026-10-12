@@ -88,7 +88,7 @@
 <body>
 <header><h1>달서 푸르지오 시그니처 형사고소 서류 서명</h1><p id="hdrSub">고소인 본인 전용 화면</p></header>
 <main id="app"><div class="spinner">불러오는 중…</div></main>
-<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a><br><span style="font-size:11px">화면 버전 2026-10-12h</span></footer>
+<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a><br><span style="font-size:11px">화면 버전 2026-10-12k</span></footer>
 
 <script>
 // ▼ Apps Script 웹 앱 주소(배포 후 받은 /exec 주소)로 바꾸세요.
@@ -301,6 +301,7 @@ const SLOT_DEFAULT = [
 const imgTag = (src, alt) => `<img src="${src}" alt="${alt}" style="width:100%;border:1px solid var(--line);border-radius:8px;margin-top:6px">`;
 function slotHelp(kind) {
   if (kind === ID_KIND) return '<p style="font-size:14px;margin:6px 0"><b>주민등록증·운전면허증·여권</b> 중 하나의 <b>앞면</b>을 찍어 주세요. <b>주민등록번호 뒷자리는 종이 등으로 가리고</b> 찍으면 됩니다. ' + ((data.items || []).some(i => i.type === '위임장') ? '<b>위임장의 첨부서류</b>로 위임장 바로 뒤에 붙어 고소장과 함께 제출됩니다.' : data.role === '참고인' ? '<b>참고인 진술서의 첨부서류</b>로 진술서 바로 뒤에 붙어 제출됩니다.' : '본인 확인 자료로 고소장과 함께 제출됩니다.') + ' 공동명의자도 <b>각자</b> 올려 주세요.</p>';
+  if (kind === '가족관계증명서·혼인관계증명서') return '<p style="font-size:14px;margin:6px 0"><b>정부24(gov.kr)</b> 또는 <b>대법원 전자가족관계등록시스템(efamily.scourt.go.kr)</b>에서 발급할 수 있습니다. 발급할 때 <b>증명서 종류는 \'일반\'</b>, <b>주민등록번호 뒷자리는 \'비공개\'</b>를 고르면 뒷자리가 가려진 증명서가 나옵니다. 이미 받은 증명서는 뒷자리를 가리고 찍어 주세요. 발급받은 PDF 파일을 그대로 올려도 됩니다.</p>';
   if (kind === '계약서 앞면') return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>사진 예시 보기</b></summary>
     <p style="font-size:14px;margin:6px 0">종이 한 장의 네 모서리가 다 보이게 찍어 주세요. 주민등록번호 뒷자리는 가려도 됩니다.</p>${imgTag('sample/01_front.png', '분양계약서 앞면 예시')}</details>`;
   if (kind === '계약서 뒷면(권리·의무 승계 내역)') return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>사진 예시 보기</b></summary>
@@ -312,8 +313,9 @@ function slotHelp(kind) {
   if (/^분양대금납부확인서/.test(kind)) return `<details style="margin:6px 0"><summary style="color:var(--brand)"><b>발급 방법 보기</b></summary><p style="font-size:14px;margin:6px 0">
     ① 푸르지오 홈페이지(<a href="https://www.prugio.com" target="_blank" rel="noopener">prugio.com</a>)에 로그인<br>
     ② <b>마이 푸르지오</b> → <b>민원서류 신청</b> → <b>분양대금납부확인서</b><br>
-    ③ <b>[분양]</b>, <b>[발코니]</b>, <b>[PLUS옵션]</b>을 각각 선택해 PDF로 저장하거나 출력해 찍기<br>
-    ④ 종류에 맞는 칸에 하나씩 올리기</p></details>`;
+    ③ <b>[분양]</b>, <b>[발코니]</b>를 각각 선택해 PDF로 저장하거나 출력해 찍기<br>
+    ④ 종류에 맞는 칸에 하나씩 올리기</p>
+    <p style="font-size:14px;margin:6px 0">입주 때 대우건설에서 팩스 등으로 받은 납부확인서처럼 <b>분양·발코니·PLUS옵션이 한 장에 함께 나온 서류</b>는 <b>[분양] 칸에 한 번만</b> 올리면 됩니다. 발코니 칸에 다시 올리지 않아도 되고, PLUS옵션 부분을 가릴 필요도 없습니다.</p></details>`;
   return '';
 }
 function slotBadge(s, list) {
