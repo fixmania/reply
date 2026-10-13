@@ -88,7 +88,7 @@
 <body>
 <header><h1>달서 푸르지오 시그니처 형사고소 서류 서명</h1><p id="hdrSub">고소인 본인 전용 화면</p></header>
 <main id="app"><div class="spinner">불러오는 중…</div></main>
-<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a><br><span style="font-size:11px">화면 버전 2026-10-13a</span></footer>
+<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a><br><span style="font-size:11px">화면 버전 2026-10-13b</span></footer>
 
 <script>
 // ▼ Apps Script 웹 앱 주소(배포 후 받은 /exec 주소)로 바꾸세요.
@@ -451,6 +451,7 @@ function showDoc(i) {
         <p><button class="btn" id="goUp">필수 서류 제출하러 가기</button></p>` : `
         <h2>전자서명</h2>
         <label class="check"><input type="checkbox" id="chk"> 위 내용을 끝까지 읽었고, 사실과 다름이 없음을 확인합니다.</label>
+        <label class="check"><input type="checkbox" id="chk2"> 본인(${esc(data.name)})이 직접 서명합니다. 다른 사람이 대신 서명하면 법적 처벌을 받을 수 있음을 알고 있습니다.</label>
         <p style="margin:6px 0">아래 칸을 누르면 <b>서명 창</b>이 열립니다. 손가락으로 <b>성명</b>을 써 주세요.</p>
         <div class="pad-wrap" id="sigBox" style="height:150px;display:flex;align-items:center;justify-content:center;cursor:pointer"><span id="sigHint" style="color:#7a8ca3;font-size:18px">✍ 여기를 눌러 서명하기</span><img id="sigImg" class="hide" alt="서명" style="max-width:96%;max-height:140px"></div>
         <div class="row" style="margin-top:10px"><button class="btn-sub" id="clear">다시 서명</button><button class="btn" id="sign" disabled>서명 제출</button></div>
@@ -474,14 +475,14 @@ function showDoc(i) {
   if (done) return;
   if (it.locked) { $('#goUp').onclick = () => showUpload(); return; }
   let sig = '';   // 서명 창에서 받은 서명 이미지(PNG)
-  const update = () => $('#sign').disabled = !($('#chk').checked && sig);
+  const update = () => $('#sign').disabled = !($('#chk').checked && $('#chk2').checked && sig);
   const setSig = png => { sig = png || ''; $('#sigImg').src = sig; $('#sigImg').classList.toggle('hide', !sig); $('#sigHint').classList.toggle('hide', !!sig); update(); };
-  $('#chk').onchange = update;
+  $('#chk').onchange = $('#chk2').onchange = update;
   $('#sigBox').onclick = () => openSignPad(png => setSig(png));
   $('#clear').onclick = () => { setSig(''); openSignPad(png => setSig(png)); };
   $('#sign').onclick = async () => {
     $('#sign').disabled = true; $('#sign').textContent = '저장 중…';
-    const r = await call({ action: 'sign', sid, type: it.type, hash: it.hash, sig, ua: navigator.userAgent }, $('#err'));
+    const r = await call({ action: 'sign', sid, type: it.type, hash: it.hash, sig, self: $('#chk2').checked, ua: navigator.userAgent }, $('#err'));
     if (r) { data = r.data; toHome(it.title + ' 서명이 저장되었습니다.'); } else { $('#sign').textContent = '서명 제출'; update(); }
   };
 }
