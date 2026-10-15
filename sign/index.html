@@ -88,7 +88,7 @@
 <body>
 <header><h1>달서 푸르지오 시그니처 형사고소 서류 서명</h1><p id="hdrSub">고소인 본인 전용 화면</p></header>
 <main id="app"><div class="spinner">불러오는 중…</div></main>
-<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a><br><span style="font-size:11px">화면 버전 2026-10-14a</span></footer>
+<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a><br><span style="font-size:11px">화면 버전 2026-10-15a</span></footer>
 
 <script>
 // ▼ Apps Script 웹 앱 주소(배포 후 받은 /exec 주소)로 바꾸세요.
@@ -227,7 +227,7 @@ function showHome(flash) {
       ${data.complaint ? '<div class="msg warn" style="margin-top:0">고소장은 아직 <b>초안</b>입니다. 검토를 거치며 내용이 바뀔 수 있습니다. ' + (ackOn ? '바뀌면 다시 확인을 부탁드립니다. ' : '지금은 <b>읽어 보기만</b> 하시면 되고, 고소장이 확정되면 확인을 따로 안내드립니다. ') + '<b>본인 서류 서명과 필수 서류 제출은 지금 진행</b>해 주세요.</div><p style="font-size:14px;color:var(--sub);margin:0 0 8px">① 고소장(초안)을 읽어 주세요</p>' : ''}
       ${data.complaint ? `<button class="item" data-k="complaint"><span class="t">${esc(data.complaint.title)}<span class="s">공동 고소장 본문 · ${ackOn ? '읽고 확인' : '읽어 보기(확인은 확정본에서)'}</span></span>${cBadge}</button>` : ''}
       <p style="font-size:14px;color:var(--sub);margin:14px 0 8px">${data.complaint ? '②' : '①'} 본인 서류를 확인하고 서명해 주세요</p>
-      ${items.map((it, i) => `<button class="item" data-k="${i}"><span class="t">${esc(it.title)}<span class="s">${it.signedAt ? '서명일시 ' + esc(it.signedAt) : (it.locked ? '필수 서류 확인 후 서명할 수 있습니다' : '서명 필요')}</span></span>${it.locked && it.status !== '완료' ? '<span class="badge b-warn">서류 확인 후</span>' : badge(it.status)}</button>`).join('')}
+      ${items.map((it, i) => `<button class="item" data-k="${i}"><span class="t">${esc(it.title)}<span class="s">${it.signedAt ? '서명일시 ' + esc(it.signedAt) : (it.locked ? '필수 서류를 올리면 서명할 수 있습니다' : '서명 필요')}</span></span>${it.locked && it.status !== '완료' ? '<span class="badge b-warn">' + (data.docs && data.docs.fix && data.docs.fix.length ? '서류 보완 후' : '서류 제출 후') + '</span>' : badge(it.status)}</button>`).join('')}
       ${data.docs ? `<p style="font-size:14px;color:var(--sub);margin:14px 0 8px">${data.complaint ? '③' : '②'} 필수 서류</p>
       <button class="item" data-k="docs"><span class="t">필수 서류 제출<span class="s">${esc((data.docs.need || '분양대금납부확인서') + ' + 신분증 사본(본인)')}</span></span>${docBadge(data.docs)}</button>` : ''}
       ${data.recordings && data.recordings.length ? `<p style="font-size:14px;color:var(--sub);margin:14px 0 8px">${data.complaint ? '④' : '③'} 녹취 확인</p>
@@ -446,10 +446,10 @@ function showDoc(i) {
   const it = data.items[i], done = it.status === '완료', canReq = it.type === '사실확인서' || it.type === '진술서';
   app.innerHTML = `
     <button class="back" id="back">← 서류 목록</button>
-    ${it.status === '재서명 필요' ? '<div class="msg bad">서명하신 뒤 내용이 수정되었습니다. 수정된 내용을 다시 읽고 서명해 주세요. 이전 서명은 효력이 없습니다.</div>' : ''}
+    ${it.status === '재서명 필요' ? (it.why === 'fix' ? '<div class="msg bad">제출하신 필수 서류에 보완이 필요하다는 비대위 확인이 있어, 이전 서명은 효력이 없습니다. 보완 서류를 올린 뒤 내용을 다시 확인하고 서명해 주세요.</div>' : '<div class="msg bad">서명하신 뒤 내용이 수정되었습니다. 수정된 내용을 다시 읽고 서명해 주세요. 이전 서명은 효력이 없습니다.</div>') : ''}
     <div class="doc">${renderBlocks(it.blocks)}</div>
     <div class="card" style="margin-top:14px" id="signBox">
-      ${done ? `<div class="msg ok">서명 완료 (${esc(it.signedAt)})</div>` : it.locked ? `<div class="msg warn">필수 서류(${esc(data.docs.missing)})를 제출하고 비대위 확인이 끝나면 서명할 수 있습니다. 서류 내용에 따라 이 문서가 고쳐질 수 있기 때문입니다.</div>
+      ${done ? `<div class="msg ok">서명 완료 (${esc(it.signedAt)})</div>` : it.locked ? `<div class="msg warn">${data.docs.fix && data.docs.fix.length ? '비대위가 보완을 요청한 서류(' + esc(data.docs.fix.join(', ')) + ')를 다시 올리면 바로 서명할 수 있습니다.' : '필수 서류(' + esc(data.docs.missing) + ')를 올리면 바로 서명할 수 있습니다. 서류 내용에 따라 이 문서가 고쳐질 수 있어 먼저 받고 있습니다.'}</div>
         <p><button class="btn" id="goUp">필수 서류 제출하러 가기</button></p>` : `
         <h2>전자서명</h2>
         <label class="check"><input type="checkbox" id="chk"> 위 내용을 끝까지 읽었고, 사실과 다름이 없음을 확인합니다.</label>
