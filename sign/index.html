@@ -88,7 +88,7 @@
 <body>
 <header><h1>달서 푸르지오 시그니처 형사고소 서류 서명</h1><p id="hdrSub">고소인 본인 전용 화면</p></header>
 <main id="app"><div class="spinner">불러오는 중…</div></main>
-<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a><br><span style="font-size:11px">화면 버전 2026-10-15a</span></footer>
+<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a><br><span style="font-size:11px">화면 버전 2026-10-17a</span></footer>
 
 <script>
 // ▼ Apps Script 웹 앱 주소(배포 후 받은 /exec 주소)로 바꾸세요.
@@ -292,6 +292,7 @@ function docBadge(dc) {
   if (!dc.missing) return '<span class="badge b-ok">제출 완료</span>';
   if (dc.confirm === '완료') return '<span class="badge b-ok">확인 완료</span>';
   if (dc.confirm === '보완 필요') return '<span class="badge b-bad">보완 필요</span>';
+  if (dc.confirm === '추후 자료보완') return '<span class="badge b-warn">나중에 보완</span>';
   return dc.uploads && dc.uploads.length ? '<span class="badge b-warn">제출됨 · 확인 중</span>' : '<span class="badge b-bad">제출 필요</span>';
 }
 
@@ -364,7 +365,7 @@ function showUpload(flash) {
     ${flash ? '<div class="msg ok">' + esc(flash) + '</div>' : ''}
     <div class="card">
       <h2>필수 서류 제출</h2>
-      ${dc.missing ? (dc.confirm === '완료' ? '<div class="msg ok">제출하신 서류를 비대위가 확인했습니다.</div>' : '<div class="msg bad"><b>아직 확인되지 않은 서류:</b> ' + esc(dc.missing) + (dc.confirm === '보완 필요' ? '<br>제출하신 서류에 보완이 필요합니다. 비대위 안내를 확인해 주세요.' : '') + '</div>') : '<div class="msg ok">필수 서류가 모두 확인되었습니다. 추가 자료가 있으면 아래에서 올려 주셔도 됩니다.</div>'}
+      ${dc.missing ? (dc.confirm === '완료' ? '<div class="msg ok">제출하신 서류를 비대위가 확인했습니다.</div>' : dc.confirm === '추후 자료보완' ? '<div class="msg warn"><b>나중에 보완하기로 한 서류:</b> ' + esc(dc.missing) + '<br>비대위와 정한 대로 서명은 먼저 하실 수 있습니다. 서류가 준비되면 아래 칸에 올려 주세요.</div>' : '<div class="msg bad"><b>아직 확인되지 않은 서류:</b> ' + esc(dc.missing) + (dc.confirm === '보완 필요' ? '<br>제출하신 서류에 보완이 필요합니다. 비대위 안내를 확인해 주세요.' : '') + '</div>') : '<div class="msg ok">필수 서류가 모두 확인되었습니다. 추가 자료가 있으면 아래에서 올려 주셔도 됩니다.</div>'}
       <p style="font-size:14px;color:var(--sub);margin:8px 0 0">우리 세대에 필요한 서류만 칸으로 나와 있습니다. <b>'제출 필요'</b> 칸에 사진(여러 장 가능)이나 PDF를 골라 <b>[올리기]</b>를 누르세요. 공동명의 세대는 한 분만 올리시면 됩니다.</p>
       ${html}
     </div>
