@@ -88,7 +88,7 @@
 <body>
 <header><h1>달서 푸르지오 시그니처 형사고소 서류 서명</h1><p id="hdrSub">고소인 본인 전용 화면</p></header>
 <main id="app"><div class="spinner">불러오는 중…</div></main>
-<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a><br><span style="font-size:11px">화면 버전 2026-10-17b</span></footer>
+<footer id="foot">문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a><br><span style="font-size:11px">화면 버전 2026-10-20a</span></footer>
 
 <script>
 // ▼ Apps Script 웹 앱 주소(배포 후 받은 /exec 주소)로 바꾸세요.
@@ -230,7 +230,7 @@ function showHome(flash) {
       <p style="font-size:14px;color:var(--sub);margin:14px 0 8px">${data.complaint ? '②' : '①'} 본인 서류를 확인하고 서명해 주세요</p>
       ${items.map((it, i) => `<button class="item" data-k="${i}"><span class="t">${esc(it.title)}<span class="s">${it.signedAt ? '서명일시 ' + esc(it.signedAt) : (it.locked ? '필수 서류를 올리면 서명할 수 있습니다' : '서명 필요')}</span></span>${it.locked && it.status !== '완료' ? '<span class="badge b-warn">' + (data.docs && data.docs.fix && data.docs.fix.length ? '서류 보완 후' : '서류 제출 후') + '</span>' : badge(it.status)}</button>`).join('')}
       ${data.docs ? `<p style="font-size:14px;color:var(--sub);margin:14px 0 8px">${data.complaint ? '③' : '②'} 필수 서류</p>
-      <button class="item" data-k="docs"><span class="t">필수 서류 제출<span class="s">${esc((data.docs.need || '분양대금납부확인서') + ' + 신분증 사본(본인)')}</span></span>${docBadge(data.docs)}</button>` : ''}
+      <button class="item" data-k="docs"><span class="t">필수 서류 제출<span class="s">${esc((data.docs.need || '분양대금납부확인서') + (data.isRep ? '' : ' + 신분증 사본(본인)'))}</span></span>${docBadge(data.docs)}</button>` : ''}
       ${data.recordings && data.recordings.length ? `<p style="font-size:14px;color:var(--sub);margin:14px 0 8px">${data.complaint ? '④' : '③'} 녹취 확인</p>
       <button class="item" data-k="recs"><span class="t">녹음 파일 확인<span class="s">제출하신 녹취 ${data.recordings.length}건 – 언제·누구와의 대화인지 확인</span></span>${(() => { const n = data.recordings.filter(r => r.answer).length; return n === data.recordings.length ? '<span class="badge b-ok">확인 완료</span>' : '<span class="badge b-warn">' + n + '/' + data.recordings.length + ' 확인</span>'; })()}</button>` : ''}
     </div>
@@ -294,11 +294,11 @@ function docsLeft(dc) {
   const ups = dc.uploads || [], ok = k => ups.some(u => u.kind === k && u.state !== '보완 필요');
   const left = dc.confirm === '완료' ? [] : (dc.slots || []).filter(s => s.req && s.st === '미제출' && !ok(s.kind)).map(s => s.label || s.kind);
   (dc.fix || []).forEach(k => { if (!ok(k) && left.indexOf(k) < 0) left.push(k + '(다시 제출)'); });
-  if (!myId().length) left.push('신분증 사본');
+  if (!myId().length && !data.isRep) left.push('신분증 사본');   // 대표 고소인은 신분증을 앱으로 받지 않음
   return left;
 }
 function docBadge(dc) {
-  if (!dc.missing && !myId().length) return '<span class="badge b-bad">신분증 필요</span>';
+  if (!dc.missing && !myId().length && !data.isRep) return '<span class="badge b-bad">신분증 필요</span>';
   if (!dc.missing) return '<span class="badge b-ok">제출 완료</span>';
   if (dc.confirm === '완료') return '<span class="badge b-ok">확인 완료</span>';
   if (dc.confirm === '보완 필요') return '<span class="badge b-bad">보완 필요</span>';
@@ -346,7 +346,9 @@ function showUpload(flash) {
   window.scrollTo(0, 0);
   const dc = data.docs, ups = dc.uploads || [];
   const slots = (dc.slots && dc.slots.length ? dc.slots : SLOT_DEFAULT).filter(s => s.kind !== OTHER_KIND)
-    .filter(s => s.kind !== ID_KIND).concat([{ kind: ID_KIND, label: '신분증 사본(' + data.name + '님 본인)', st: '미제출', req: true, note: '' }]);
+    .filter(s => s.kind !== ID_KIND).concat([data.isRep
+      ? { kind: ID_KIND, label: '신분증 사본(' + data.name + '님 본인 – 대표 고소인은 선택)', st: '권장', req: false, note: '대표 고소인은 앱으로 올리지 않아도 됩니다. 고소장 접수 때 신분증 원본을 지참하고 사본 1부를 첨부합니다.' }
+      : { kind: ID_KIND, label: '신분증 사본(' + data.name + '님 본인)', st: '미제출', req: true, note: '' }]);
   // '그 밖의 자료' 칸은 두지 않음: 증거자료는 이미 받은 것으로 고소하고, 추가 자료는 고소장 접수 뒤 따로 받음
   const known = slots.map(s => s.kind);
   const listOf = s => s.kind === ID_KIND ? myId() : ups.filter(u => u.kind === s.kind || (s.kind === OTHER_KIND && known.indexOf(u.kind) < 0));
