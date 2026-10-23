@@ -1,15 +1,143 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<title>고소장 확인 – 달서 푸르지오 시그니처</title>
-<meta http-equiv="refresh" content="0; url=https://script.google.com/macros/s/AKfycbyAhQwRIy6KTRVk12TnK_SCq-H3-MTlIOJ-aceqjndc6wxyt1LuYAQOouDeaTSt4Yy2/exec">
-<script>location.replace('https://script.google.com/macros/s/AKfycbyAhQwRIy6KTRVk12TnK_SCq-H3-MTlIOJ-aceqjndc6wxyt1LuYAQOouDeaTSt4Yy2/exec');</script>
-<style>body{margin:0;font:17px/1.6 "Malgun Gothic","Apple SD Gothic Neo",sans-serif;background:#f4f6f9;color:#1b2430;display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center;padding:16px}a{color:#1f4e79;font-weight:700}</style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow"><title>고소장 확인 – 달서 푸르지오 시그니처</title>
+<base target="_top">
+<style>
+  :root { --bg:#f4f6f9; --card:#fff; --ink:#1b2430; --sub:#5a6675; --line:#d7dde5; --brand:#1f4e79; --ok:#1e7a46; --ok-bg:#e3f3e9; --bad:#b3261e; --bad-bg:#fde7e5; --warn:#8a5300; --warn-bg:#fff3dc; --kv:#eef3f8; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.65 "Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif; }
+  header { background:var(--brand); color:#fff; padding:14px 16px; }
+  header h1 { margin:0; font-size:18px; } header p { margin:2px 0 0; font-size:13px; opacity:.85; }
+  main { max-width:760px; margin:0 auto; padding:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 16px; margin-bottom:14px; }
+  h2 { font-size:20px; margin:0 0 8px; }
+  label { display:block; font-weight:700; margin:12px 0 6px; }
+  input { width:100%; font-size:20px; padding:12px; border:2px solid var(--line); border-radius:10px; }
+  .row { display:flex; gap:10px; } .row > * { flex:1; }
+  button { font:inherit; cursor:pointer; border:0; border-radius:10px; padding:14px 16px; }
+  .btn { width:100%; background:var(--brand); color:#fff; font-weight:700; font-size:18px; margin-top:16px; }
+  .btn:disabled { background:#9aa8b8; }
+  .msg { padding:12px 14px; border-radius:10px; margin:10px 0; font-size:15px; }
+  .msg.bad { background:var(--bad-bg); color:var(--bad); } .msg.warn { background:var(--warn-bg); color:var(--warn); }
+  .item { width:100%; text-align:left; background:var(--card); border:1px solid var(--line); margin-bottom:10px; display:flex; align-items:center; gap:12px; padding:16px; }
+  .item b { flex:1; } .item small { display:block; color:var(--sub); font-size:13px; font-weight:400; }
+  .badge { font-size:13px; font-weight:700; padding:4px 10px; border-radius:999px; background:var(--ok-bg); color:var(--ok); white-space:nowrap; }
+  .back { background:none; color:var(--brand); font-weight:700; padding:6px 0; }
+  .doc { position:relative; background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px 16px; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  .doc .wm { position:absolute; inset:0; pointer-events:none; opacity:.07; background-repeat:repeat; border-radius:12px; }
+  /* 화면 가운데 큰 워터마크: 스크롤해도 늘 화면 중앙에 있어 어느 부분을 캡처해도 함께 찍힘 */
+  .bigwm { position:fixed; inset:0; pointer-events:none; z-index:50; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .bigwm div { transform:rotate(-30deg); text-align:center; font-weight:800; line-height:1.35; white-space:nowrap; color:rgba(179,38,30,.16); font-size:clamp(30px, 10vw, 64px); }
+  .bigwm small { display:block; font-size:.55em; font-weight:700; }
+  /* 다른 창·앱으로 가거나 캡처 도구를 켜면 문서를 가림(누르면 다시 보임) */
+  .veil { position:fixed; inset:0; z-index:100; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; color:var(--brand); font-weight:700; font-size:19px; cursor:pointer; }
+  .veil small { display:block; margin-top:10px; color:var(--sub); font-weight:400; font-size:14px; }
+  .doc .dt { text-align:center; font-size:22px; letter-spacing:.15em; margin:4px 0 16px; }
+  .doc h3 { font-size:17px; margin:18px 0 6px; color:var(--brand); }
+  .doc p { margin:6px 0; word-break:keep-all; overflow-wrap:anywhere; }
+  .doc p.note { font-size:14px; color:var(--sub); } .doc p.r { text-align:right; } .doc p.c { text-align:center; }
+  .tw { overflow-x:auto; margin:8px 0; }
+  table { border-collapse:collapse; width:100%; font-size:15px; }
+  th, td { border:1px solid var(--line); padding:7px 8px; vertical-align:top; text-align:left; word-break:keep-all; overflow-wrap:anywhere; }
+  table.kv th { background:var(--kv); width:32%; } table.grid tr:first-child td { background:var(--kv); font-weight:700; } table.small { font-size:13px; }
+  footer { text-align:center; font-size:13px; color:var(--sub); padding:18px 16px 30px; } footer a { color:var(--brand); }
+  .spinner { text-align:center; padding:30px; color:var(--sub); }
+  @media print { body * { display:none !important; } }
+</style>
 </head>
 <body>
-<p>고소장 확인 화면으로 이동하고 있습니다.<br>넘어가지 않으면 <a href="https://script.google.com/macros/s/AKfycbyAhQwRIy6KTRVk12TnK_SCq-H3-MTlIOJ-aceqjndc6wxyt1LuYAQOouDeaTSt4Yy2/exec">여기를 누르세요</a>.</p>
+<header><h1>달서 푸르지오 시그니처 형사고소 확인</h1><p>고소인 본인 확인용 화면 · 외부 유출 금지</p></header>
+<main id="app"><div class="spinner">불러오는 중…</div></main>
+<footer>문의: <a id="contact" href="https://open.kakao.com/o/sGS9BEOi" target="_blank" rel="noopener">비대위 오픈채팅</a></footer>
+<script>
+// GitHub 등 다른 곳에 올린 화면이면 이 주소(Apps Script 웹 앱 /exec)로 로그인 정보 없이 데이터를 주고받음.
+// Apps Script가 직접 보여 주는 화면이면 google.script.run을 씀
+var API = 'https://script.google.com/macros/s/AKfycbyAhQwRIy6KTRVk12TnK_SCq-H3-MTlIOJ-aceqjndc6wxyt1LuYAQOouDeaTSt4Yy2/exec';
+var GAS = typeof google !== 'undefined' && google.script && google.script.run;
+var app = document.getElementById('app'), sid = '', me = null, list = [];
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function br(s) { return esc(s).replace(/\n/g, '<br>'); }
+function fail(e) { showLogin('연결 중 오류가 났습니다. 잠시 뒤 다시 시도해 주세요. (' + esc(e && e.message || e) + ')'); }
+function run(fn, args, ok, quiet) {   // quiet: 실패해도 화면에 오류를 띄우지 않음(문의 링크 가져오기)
+  var onFail = quiet ? function () {} : fail;
+  if (GAS) { var r = google.script.run.withSuccessHandler(ok).withFailureHandler(onFail); r[fn].apply(r, args); return; }
+  var body = fn === 'login' ? Object.assign({ action: 'login' }, args[0]) : fn === 'getDoc' ? { action: 'doc', sid: args[0], type: args[1] } : { action: fn };
+  fetch(API, { method: 'POST', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+    .then(function (res) { if (!res.ok) throw new Error('서버 응답 오류(' + res.status + ')'); return res.json(); })
+    .then(ok, onFail);
+}
+run('contact', [], function (u) { u = u && u.url !== undefined ? u.url : u; if (u) document.getElementById('contact').href = u; }, true);
+
+function renderBlocks(blocks) {
+  var h = '';
+  (blocks || []).forEach(function (b) {
+    if (b.t === 'title') h += '<h2 class="dt">' + esc(b.text) + '</h2>';
+    else if (b.t === 'h') h += '<h3>' + esc(b.text) + '</h3>';
+    else if (b.t === 'p') { var c = [b.note ? 'note' : '', b.align === 'right' ? 'r' : '', b.align === 'center' ? 'c' : ''].join(' ').trim(); h += '<p' + (c ? ' class="' + c + '"' : '') + '>' + (b.bold ? '<b>' + br(b.text) + '</b>' : br(b.text)) + '</p>'; }
+    else if (b.t === 'blank') h += '<p>&nbsp;</p>';
+    else if (b.t === 'table' && b.rows) {
+      if (b.kv) h += '<div class="tw"><table class="kv' + (b.small ? ' small' : '') + '">' + b.rows.map(function (r) { return '<tr><th>' + br(r[0]) + '</th><td>' + br(r[1]) + '</td></tr>'; }).join('') + '</table></div>';
+      else h += '<div class="tw"><table class="grid' + (b.small ? ' small' : '') + '">' + b.rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + br(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table></div>';
+    }
+  });
+  return h;
+}
+// 문서 위에 '이름 · 동호수 · 열람용' 옅은 글씨를 비스듬히 반복해 깔아 둠(캡처해 퍼질 때 출처가 보이게)
+function watermark(text) {
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180"><text x="10" y="120" transform="rotate(-25 160 90)" font-size="17" font-family="sans-serif" fill="#1f4e79">' + esc(text) + ' · 열람용</text></svg>';
+  return 'url("data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg) + '")';
+}
+
+function showLogin(msg) {
+  sid = ''; unveil();
+  app.innerHTML = '<div class="card"><h2>본인 확인</h2><p style="color:var(--sub);font-size:15px;margin:0">제출한 고소장과 본인이 서명한 서류를 확인하는 화면입니다. 서명은 받지 않습니다.</p>' +
+    (msg ? '<div class="msg bad">' + msg + '</div>' : '') +
+    '<label for="nm">성명</label><input id="nm" autocomplete="name">' +
+    '<label for="ph">휴대폰 번호</label><input id="ph" type="tel" inputmode="numeric" placeholder="010-0000-0000">' +
+    '<label>분양세대</label><div class="row"><input id="dg" type="tel" inputmode="numeric" placeholder="동"><input id="ho" type="tel" inputmode="numeric" placeholder="호"></div>' +
+    '<button class="btn" id="go">확인</button></div>' +
+    '<div class="msg warn">고소인(참고인) 확인용입니다. 화면을 캡처하거나 다른 사람에게 전달하지 마세요. 수사에 지장을 줄 수 있습니다.</div>';
+  document.getElementById('go').onclick = function () {
+    var q = { name: document.getElementById('nm').value, phone: document.getElementById('ph').value, dong: document.getElementById('dg').value, ho: document.getElementById('ho').value };
+    if (!q.name.trim() || q.phone.replace(/\D/g, '').length < 10 || !q.dong || !q.ho) { showLogin('성명, 휴대폰 번호, 동·호수를 모두 입력해 주세요.'); return; }
+    this.disabled = true; this.textContent = '확인 중…';
+    run('login', [q], function (r) { if (!r.ok) return showLogin(esc(r.message)); sid = r.sid; me = r.me; list = r.list; showHome(); });
+  };
+}
+var DESC = { '고소장': '대구성서경찰서에 제출한 고소장(개인정보 가림, 별지2 상담직원 목록·별지6 수사 요청 포함)', '사실확인서': '본인이 서명한 사실확인서(증 제1호)', '진술서': '본인이 서명한 진술서(증 제2호)', '참고인 진술서': '본인이 서명한 참고인 진술서(증 제2호)' };
+function showHome() {
+  unveil();
+  app.innerHTML = '<div class="card"><h2>' + esc(me.name) + '님 (' + esc(me.unit) + ')</h2><p style="margin:0;color:var(--sub);font-size:15px">' + (me.role === '참고인' ? '참고인으로' : '고소인으로') + ' 확인되었습니다. 볼 서류를 누르세요.</p></div>' +
+    list.map(function (d, i) { return '<button class="item" data-i="' + i + '"><b>' + esc(d.type) + '<small>' + esc(DESC[d.type] || '') + (d.signedAt ? ' · 서명 ' + esc(d.signedAt.slice(0, 10)) : '') + '</small></b>' + (d.signedAt ? '<span class="badge">서명 완료</span>' : '') + '</button>'; }).join('') +
+    '<button class="back" id="out">← 처음 화면으로</button>';
+  Array.prototype.forEach.call(document.querySelectorAll('.item'), function (b) { b.onclick = function () { openDoc(list[Number(b.dataset.i)].type); }; });
+  document.getElementById('out').onclick = function () { showLogin(''); };
+}
+function openDoc(type) {
+  app.innerHTML = '<div class="spinner">불러오는 중…</div>';
+  run('getDoc', [sid, type], function (r) {
+    if (!r.ok) { if (r.expired) return showLogin(esc(r.message)); app.innerHTML = '<div class="msg bad">' + esc(r.message) + '</div><button class="back" id="bk">← 목록으로</button>'; document.getElementById('bk').onclick = showHome; return; }
+    app.innerHTML = '<button class="back" id="bk">← 목록으로</button><div class="doc"><div class="wm"></div>' + renderBlocks(r.blocks) + '</div><button class="back" id="bk2">← 목록으로</button>' +
+      '<div class="bigwm"><div>' + esc(me.name) + '<br>' + esc(me.unit) + '<small>열람용 · 외부 유출 금지</small></div></div>';
+    document.querySelector('.wm').style.backgroundImage = watermark(r.mark);
+    document.getElementById('bk').onclick = document.getElementById('bk2').onclick = showHome;
+    window.scrollTo(0, 0);
+  });
+}
+document.addEventListener('contextmenu', function (e) { if (e.target.closest && e.target.closest('.doc')) e.preventDefault(); });
+// 문서를 보는 중에 창이 포커스를 잃거나(캡처 도구·다른 창), 앱이 뒤로 가거나(휴대폰 앱 전환), PrintScreen을 누르면 문서를 가림
+function unveil() { Array.prototype.forEach.call(document.querySelectorAll('.veil'), function (v) { v.remove(); }); }
+function veil() {
+  if (!document.querySelector('.doc') || document.querySelector('.veil')) return;
+  var v = document.createElement('div'); v.className = 'veil';
+  v.innerHTML = '문서를 가렸습니다<small>화면을 누르면 다시 보입니다.<br>캡처·촬영·전달은 하지 마세요.</small>';
+  v.onclick = unveil; document.body.appendChild(v);
+}
+window.addEventListener('blur', veil);
+document.addEventListener('visibilitychange', function () { if (document.hidden) veil(); });
+document.addEventListener('keyup', function (e) { if (e.key === 'PrintScreen') { veil(); try { navigator.clipboard.writeText(''); } catch (x) {} } });
+showLogin('');
+</script>
 </body>
 </html>
